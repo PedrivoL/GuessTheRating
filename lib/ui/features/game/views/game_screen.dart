@@ -215,7 +215,7 @@ class _VsBadge extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: AppColors.surfaceElevated,
-        shape: BoxShape.circle,
+        borderRadius: BorderRadius.zero,
         border: Border.all(color: AppColors.border, width: 1.5),
         boxShadow: [
           BoxShadow(

@@ -35,7 +35,7 @@ class GameOverOverlay extends StatelessWidget {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.zero,
                 border: Border.all(color: AppColors.border, width: 1.5),
                 boxShadow: [
                   BoxShadow(
@@ -71,7 +71,7 @@ class GameOverOverlay extends StatelessWidget {
                         color: AppColors.letterboxdOrange.withValues(
                           alpha: 0.2,
                         ),
-                        borderRadius: BorderRadius.circular(999),
+                        borderRadius: BorderRadius.zero,
                         border: Border.all(color: AppColors.letterboxdOrange),
                       ),
                       child: const Text(
@@ -106,9 +106,9 @@ class GameOverOverlay extends StatelessWidget {
                   const SizedBox(height: 18),
                   Container(
                     padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppColors.surfaceElevated,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.zero,
                     ),
                     child: Column(
                       children: [
@@ -131,6 +131,9 @@ class GameOverOverlay extends StatelessWidget {
                         backgroundColor: AppColors.letterboxdGreen,
                         foregroundColor: AppColors.background,
                         padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero,
+                        ),
                         textStyle: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
@@ -167,7 +170,7 @@ class _StatTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
       decoration: BoxDecoration(
         color: AppColors.background,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.zero,
         border: Border.all(color: accent.withValues(alpha: 0.45)),
       ),
       child: Column(

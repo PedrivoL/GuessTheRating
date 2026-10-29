@@ -50,7 +50,7 @@ class MoviePosterCard extends StatelessWidget {
         curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.zero,
           border: Border.all(color: borderColor, width: borderWidth),
           boxShadow: [
             BoxShadow(
@@ -391,7 +391,7 @@ class _RatingBadgeSection extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
               decoration: BoxDecoration(
                 color: accentColor.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.zero,
                 border: Border.all(
                   color: accentColor.withValues(alpha: 0.65),
                 ),
@@ -457,7 +457,7 @@ class _FeedbackBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.zero,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -101,7 +101,7 @@ class _ScorePill extends StatelessWidget {
         color: highlighted
             ? AppColors.letterboxdOrange.withValues(alpha: 0.18)
             : AppColors.surfaceElevated,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.zero,
         border: Border.all(
           color: highlighted ? AppColors.letterboxdOrange : AppColors.border,
         ),
