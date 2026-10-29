@@ -95,7 +95,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'CineBoxd • Maior Nota',
+      title: 'GuessTheRating • Qual tem a Maior Nota?',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       home: GameScreen(viewModel: _activeViewModel),

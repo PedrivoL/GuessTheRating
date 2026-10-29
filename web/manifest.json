@@ -1,6 +1,6 @@
 {
-    "name": "CineBoxd • Qual tem a Maior Nota?",
-    "short_name": "CineBoxd",
+    "name": "GuessTheRating • Qual tem a Maior Nota?",
+    "short_name": "GuessTheRating",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#14181C",
