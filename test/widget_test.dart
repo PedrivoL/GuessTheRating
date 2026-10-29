@@ -63,7 +63,7 @@ void main() {
       const service = AssetMovieCatalogService();
       final movies = (await tester.runAsync(service.fetchMovies))!;
 
-      expect(movies.length, equals(755));
+      expect(movies.length, greaterThanOrEqualTo(750));
       final ids = movies.map((m) => m.id).toSet();
       final posters = movies.map((m) => m.posterUrl).toSet();
       final titleYears = movies

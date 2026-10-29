@@ -41,7 +41,7 @@
     "originalTitle": "The Godfather",
     "year": 1972,
     "director": "Francis Ford Coppola",
-    "rating": 4.5,
+    "rating": 4.51,
     "posterUrl": "https://m.media-amazon.com/images/M/MV5BNGEwYjgwOGQtYjg5ZS00Njc1LTk2ZGEtM2QwZWQ2NjdhZTE5XkEyXkFqcGc@._V1_UX600_.jpg"
   },
   {
@@ -59,7 +59,7 @@
     "originalTitle": "Spirited Away",
     "year": 2001,
     "director": "Hayao Miyazaki",
-    "rating": 4.5,
+    "rating": 4.43,
     "posterUrl": "https://m.media-amazon.com/images/M/MV5BNTEyNmEwOWUtYzkyOC00ZTQ4LTllZmUtMjk0Y2YwOGUzYjRiXkEyXkFqcGc@._V1_UX600_.jpg"
   },
   {
@@ -113,7 +113,7 @@
     "originalTitle": "Whiplash",
     "year": 2014,
     "director": "Damien Chazelle",
-    "rating": 4.4,
+    "rating": 4.42,
     "posterUrl": "https://m.media-amazon.com/images/M/MV5BMDFjOWFkYzktYzhhMC00NmYyLTkwY2EtYjViMDhmNzg0OGFkXkEyXkFqcGc@._V1_UX600_.jpg"
   },
   {
@@ -140,7 +140,7 @@
     "originalTitle": "Pulp Fiction",
     "year": 1994,
     "director": "Quentin Tarantino",
-    "rating": 4.3,
+    "rating": 4.23,
     "posterUrl": "https://m.media-amazon.com/images/M/MV5BYTViYTE3ZGQtNDBlMC00ZTAyLTkyODMtZGRiZDg0MjA2YThkXkEyXkFqcGc@._V1_UX600_.jpg"
   },
   {
@@ -167,7 +167,7 @@
     "originalTitle": "The Truman Show",
     "year": 1998,
     "director": "Peter Weir",
-    "rating": 4.3,
+    "rating": 4.22,
     "posterUrl": "https://m.media-amazon.com/images/M/MV5BNzA3ZjZlNzYtMTdjMy00NjMzLTk5ZGYtMTkyYzNiOGM1YmM3XkEyXkFqcGc@._V1_UX600_.jpg"
   },
   {
@@ -203,7 +203,7 @@
     "originalTitle": "Ratatouille",
     "year": 2007,
     "director": "Brad Bird",
-    "rating": 4.2,
+    "rating": 4.23,
     "posterUrl": "https://m.media-amazon.com/images/M/MV5BMTMzODU0NTkxMF5BMl5BanBnXkFtZTcwMjQ4MzMzMw@@._V1_UX600_.jpg"
   },
   {
@@ -221,7 +221,7 @@
     "originalTitle": "The Matrix",
     "year": 1999,
     "director": "Lilly & Lana Wachowski",
-    "rating": 4.2,
+    "rating": 4.18,
     "posterUrl": "https://m.media-amazon.com/images/M/MV5BN2NmN2VhMTQtMDNiOS00NDlhLTliMjgtODE2ZTY0ODQyNDRhXkEyXkFqcGc@._V1_UX600_.jpg"
   },
   {
@@ -248,7 +248,7 @@
     "originalTitle": "Get Out",
     "year": 2017,
     "director": "Jordan Peele",
-    "rating": 4.1,
+    "rating": 4.13,
     "posterUrl": "https://m.media-amazon.com/images/M/MV5BMjUxMDQwNjcyNl5BMl5BanBnXkFtZTgwNzcwMzc0MTI@._V1_UX600_.jpg"
   },
   {
@@ -302,7 +302,7 @@
     "originalTitle": "Titanic",
     "year": 1997,
     "director": "James Cameron",
-    "rating": 3.8,
+    "rating": 3.84,
     "posterUrl": "https://m.media-amazon.com/images/M/MV5BYzYyN2FiZmUtYWYzMy00MzViLWJkZTMtOGY1ZjgzNWMwN2YxXkEyXkFqcGc@._V1_UX600_.jpg"
   },
   {
@@ -311,7 +311,7 @@
     "originalTitle": "Joker",
     "year": 2019,
     "director": "Todd Phillips",
-    "rating": 3.8,
+    "rating": 3.85,
     "posterUrl": "https://m.media-amazon.com/images/M/MV5BNzY3OWQ5NDktNWQ2OC00ZjdlLThkMmItMDhhNDk3NTFiZGU4XkEyXkFqcGc@._V1_UX600_.jpg"
   },
   {
@@ -329,7 +329,7 @@
     "originalTitle": "Avatar",
     "year": 2009,
     "director": "James Cameron",
-    "rating": 3.6,
+    "rating": 3.78,
     "posterUrl": "https://m.media-amazon.com/images/M/MV5BMDEzMmQwZjctZWU2My00MWNlLWE0NjItMDJlYTRlNGJiZjcyXkEyXkFqcGc@._V1_UX600_.jpg"
   },
   {
@@ -492,7 +492,7 @@
     "year": 2021,
     "director": "Craig Gillespie",
     "rating": 3.57,
-    "posterUrl": "https://m.media-amazon.com/images/M/MV5BZWI5NmI2MWQtZGI1Zi00YTFkLTlkMDQtNmE3ZWRiNWZjZTM3XkEyXkFqcGc@._V1_UX600_.jpg"
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMWY5MjljNjctZjhjZS00MWY0LTgwYzUtZTJiYTVmMmJkM2E0XkEyXkFqcGc@._V1_UX600_.jpg"
   },
   {
     "id": "boxd_1W7A",
@@ -1022,8 +1022,8 @@
     "originalTitle": "American Psycho",
     "year": 2000,
     "director": "Mary Harron",
-    "rating": 3.46,
-    "posterUrl": "https://m.media-amazon.com/images/M/MV5BN2E0YTQ5ZTEtOWUwMi00YzY5LTkxNjgtY2ZlMDQwNjQxODgwXkEyXkFqcGc@._V1_UX600_.jpg"
+    "rating": 3.75,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BNzBjM2I5ZjUtNmIzNy00OGNkLWIwZDMtOTAwYWUwMzA2YjdlXkEyXkFqcGc@._V1_UX600_.jpg"
   },
   {
     "id": "boxd_bAEW",
@@ -3112,15 +3112,6 @@
     "director": "D.J. Caruso",
     "rating": 3.17,
     "posterUrl": "https://m.media-amazon.com/images/M/MV5BMTMyNTIxOTQ3M15BMl5BanBnXkFtZTcwMjU2NzAzMw@@._V1_UX600_.jpg"
-  },
-  {
-    "id": "boxd_1hl2",
-    "title": "Guinea Pig: Mermaid in the Manhole",
-    "originalTitle": "Guinea Pig: Mermaid in the Manhole",
-    "year": 1988,
-    "director": "Hideshi Hino",
-    "rating": 3.35,
-    "posterUrl": "https://m.media-amazon.com/images/M/MV5BZmI2ZTc0ZWItMjZjNC00NjEwLWI0ZTQtNGE2NmRiMzQxNzc3XkEyXkFqcGc@._V1_UX600_.jpg"
   },
   {
     "id": "boxd_s3ds",
@@ -6543,15 +6534,6 @@
     "posterUrl": "https://m.media-amazon.com/images/M/MV5BOWYxZTM1ZGMtMjg5MC00NzcyLTk0ZTEtZWI0ZThkNDJiYjZmXkEyXkFqcGc@._V1_UX600_.jpg"
   },
   {
-    "id": "boxd_3A94",
-    "title": "Lolita: Vibrator Torture",
-    "originalTitle": "Lolita: Vibrator Torture",
-    "year": 1987,
-    "director": "Hisayasu Satō",
-    "rating": 3.13,
-    "posterUrl": "https://m.media-amazon.com/images/M/MV5BZmQ1OGNhMzktZmM1NC00ZjA2LTg1MTAtMGYxMmI2NmYxYWVhXkEyXkFqcGc@._V1_UX600_.jpg"
-  },
-  {
     "id": "boxd_27xu",
     "title": "The Station Agent",
     "originalTitle": "The Station Agent",
@@ -6793,5 +6775,410 @@
     "director": "Michael Mann",
     "rating": 4.07,
     "posterUrl": "https://m.media-amazon.com/images/M/MV5BNzk2MGQ3NjMtNDc4Yy00NzEwLTk5ZDQtNzYwMjhmMzcwN2JiXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_lbJC",
+    "title": "Last Night in Soho",
+    "originalTitle": "Last Night in Soho",
+    "year": 2021,
+    "director": "Edgar Wright",
+    "rating": 3.47,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BODdhZjBmZTEtZmQyMy00NWY5LWJiMWQtODhjODFkZWZlMjMyXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_tlc0",
+    "title": "Men",
+    "originalTitle": "Men",
+    "year": 2022,
+    "director": "Alex Garland",
+    "rating": 2.82,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BNzQyNjY2MTItYzMwYi00NDg0LTk3NWItZTRmZmY5OTM5ZGU0XkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_ikvo",
+    "title": "Climax",
+    "originalTitle": "Climax",
+    "year": 2018,
+    "director": "Gaspar Noé",
+    "rating": 3.76,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BYWQwOTVmNGQtNGU1Ny00ODNkLTkzMmMtYzY1ZWQyMzk0Y2ZiXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_9X0m",
+    "title": "The Witch",
+    "originalTitle": "The Witch",
+    "year": 2015,
+    "director": "Robert Eggers",
+    "rating": 3.82,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMTUyNzkwMzAxOF5BMl5BanBnXkFtZTgwMzc1OTk1NjE@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_sDCe",
+    "title": "Nope",
+    "originalTitle": "Nope",
+    "year": 2022,
+    "director": "Jordan Peele",
+    "rating": 3.66,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BODRlNWRhZWUtMzdlZC00ZDIyLWFhZjMtYTcxNjI1ZDIwODhjXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_iRcE",
+    "title": "Bodies Bodies Bodies",
+    "originalTitle": "Bodies Bodies Bodies",
+    "year": 2022,
+    "director": "Halina Reijn",
+    "rating": 3.25,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BYmFlMTFlNjMtYzFlNy00ZjI4LTkwYmItZjA4MzFmMDJlOWQzXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_ikHu",
+    "title": "Five Nights at Freddy's",
+    "originalTitle": "Five Nights at Freddy's",
+    "year": 2023,
+    "director": "Emma Tammi",
+    "rating": 2.6,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BNzFkMDE2ZmEtOWMwNy00MWM2LThlNjMtZWQzNWY5MTJjZjcxXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_5xtO",
+    "title": "Enemy",
+    "originalTitle": "Enemy",
+    "year": 2013,
+    "director": "Denis Villeneuve",
+    "rating": 3.54,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMTQ2NzA5NjE4N15BMl5BanBnXkFtZTgwMjQ4NzMxMTE@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_a75m",
+    "title": "Green Room",
+    "originalTitle": "Green Room",
+    "year": 2015,
+    "director": "Jeremy Saulnier",
+    "rating": 3.61,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMjU1ODQ5NzA0N15BMl5BanBnXkFtZTgwMDg5MTA5NzE@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_C6uQ",
+    "title": "Talk to Me",
+    "originalTitle": "Talk to Me",
+    "year": 2022,
+    "director": "Michael Philippou, Danny Philippou",
+    "rating": 3.46,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BY2I2NzJmY2YtYTM3Ni00ZGJhLThkZTItODFhMzhlZjZkMDQ5XkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_29zs",
+    "title": "Se7en",
+    "originalTitle": "Se7en",
+    "year": 1995,
+    "director": "David Fincher",
+    "rating": 4.39,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BY2IzNzMxZjctZjUxZi00YzAxLTk3ZjMtODFjODdhMDU5NDM1XkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_70w",
+    "title": "Kill Bill: Vol. 1",
+    "originalTitle": "Kill Bill: Vol. 1",
+    "year": 2003,
+    "director": "Quentin Tarantino",
+    "rating": 4.22,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BZmMyYzJlZmYtY2I3NC00NjAyLTkyZWItZjdjZDI1YTYyYTEwXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_3ZqO",
+    "title": "The Grand Budapest Hotel",
+    "originalTitle": "The Grand Budapest Hotel",
+    "year": 2014,
+    "director": "Wes Anderson",
+    "rating": 4.24,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMzM5NjUxOTEyMl5BMl5BanBnXkFtZTgwNjEyMDM0MDE@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_1NhQ",
+    "title": "Coraline",
+    "originalTitle": "Coraline",
+    "year": 2009,
+    "director": "Henry Selick",
+    "rating": 4.2,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMzQxNjM5NzkxNV5BMl5BanBnXkFtZTcwMzg5NDMwMg@@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_jhxe",
+    "title": "Midsommar",
+    "originalTitle": "Midsommar",
+    "year": 2019,
+    "director": "Ari Aster",
+    "rating": 3.73,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMzQxNzQzOTQwM15BMl5BanBnXkFtZTgwMDQ2NTcwODM@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_2cCk",
+    "title": "Django Unchained",
+    "originalTitle": "Django Unchained",
+    "year": 2012,
+    "director": "Quentin Tarantino",
+    "rating": 4.35,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMjIyNTQ5NjQ1OV5BMl5BanBnXkFtZTcwODg1MDU4OA@@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_29Nu",
+    "title": "The Shining",
+    "originalTitle": "The Shining",
+    "year": 1980,
+    "director": "Stanley Kubrick",
+    "rating": 4.21,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BNmM5ZThhY2ItOGRjOS00NzZiLWEwYTItNDgyMjFkOTgxMmRiXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_Sw0",
+    "title": "Black Swan",
+    "originalTitle": "Black Swan",
+    "year": 2010,
+    "director": "Darren Aronofsky",
+    "rating": 4.17,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BNzY2NzI4OTE5MF5BMl5BanBnXkFtZTcwMjMyNDY4Mw@@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_2b5O",
+    "title": "The Lord of the Rings: The Fellowship of the Ring",
+    "originalTitle": "The Lord of the Rings: The Fellowship of the Ring",
+    "year": 2001,
+    "director": "Peter Jackson",
+    "rating": 4.39,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BNzIxMDQ2YTctNDY4MC00ZTRhLTk4ODQtMTVlOWY4NTdiYmMwXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_1WyQ",
+    "title": "Fantastic Mr. Fox",
+    "originalTitle": "Fantastic Mr. Fox",
+    "year": 2009,
+    "director": "Wes Anderson",
+    "rating": 4.3,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BYTA1ZTIxZDUtNGFjYS00YTc5LTgzNDMtZWNjYjBlMzI2OTk3XkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_29Qy",
+    "title": "Harry Potter and the Prisoner of Azkaban",
+    "originalTitle": "Harry Potter and the Prisoner of Azkaban",
+    "year": 2004,
+    "director": "Alfonso Cuarón",
+    "rating": 4.15,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMTY4NTIwODg0N15BMl5BanBnXkFtZTcwOTc0MjEzMw@@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_1VNg",
+    "title": "Mean Girls",
+    "originalTitle": "Mean Girls",
+    "year": 2004,
+    "director": "Mark Waters",
+    "rating": 3.81,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMjE1MDQ4MjI1OV5BMl5BanBnXkFtZTcwNzcwODAzMw@@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_bYJQ",
+    "title": "Coco",
+    "originalTitle": "Coco",
+    "year": 2017,
+    "director": "Lee Unkrich",
+    "rating": 4.13,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMDIyM2E2NTAtMzlhNy00ZGUxLWI1NjgtZDY5MzhiMDc5NGU3XkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_23De",
+    "title": "Howl's Moving Castle",
+    "originalTitle": "Howl's Moving Castle",
+    "year": 2004,
+    "director": "Hayao Miyazaki",
+    "rating": 4.36,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMTY1OTg0MjE3MV5BMl5BanBnXkFtZTcwNTUxMTkyMQ@@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_3VH2",
+    "title": "Guardians of the Galaxy",
+    "originalTitle": "Guardians of the Galaxy",
+    "year": 2014,
+    "director": "James Gunn",
+    "rating": 3.87,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BM2ZmNjQ2MzAtNDlhNi00MmQyLWJhZDMtNmJiMjFlOWY4MzcxXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_2awE",
+    "title": "The Devil Wears Prada",
+    "originalTitle": "The Devil Wears Prada",
+    "year": 2006,
+    "director": "David Frankel",
+    "rating": 3.82,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BOWM3NTI3YWEtYjJmMy00M2U5LWI1NzEtZWM3ZDY2ZWNjOGRiXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_1OEc",
+    "title": "Up",
+    "originalTitle": "Up",
+    "year": 2009,
+    "director": "Pete Docter",
+    "rating": 4.1,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BNmI1ZTc5MWMtMDYyOS00ZDc2LTkzOTAtNjQ4NWIxNjYyNDgzXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_2b8e",
+    "title": "Back to the Future",
+    "originalTitle": "Back to the Future",
+    "year": 1985,
+    "director": "Robert Zemeckis",
+    "rating": 4.22,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BZmM3ZjE0NzctNjBiOC00MDZmLTgzMTUtNGVlOWFlOTNiZDJiXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_1VEo",
+    "title": "WALL·E",
+    "originalTitle": "WALL·E",
+    "year": 2008,
+    "director": "Andrew Stanton",
+    "rating": 4.25,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMjExMTg5OTU0NF5BMl5BanBnXkFtZTcwMjMxMzMzMw@@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_72s",
+    "title": "Star Wars",
+    "originalTitle": "Star Wars",
+    "year": 1977,
+    "director": "George Lucas",
+    "rating": 4.16,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BOGUwMDk0Y2MtNjBlNi00NmRiLTk2MWYtMGMyMDlhYmI4ZDBjXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_4KHC",
+    "title": "Inside Out",
+    "originalTitle": "Inside Out",
+    "year": 2015,
+    "director": "Pete Docter",
+    "rating": 3.82,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BOTgxMDQwMDk0OF5BMl5BanBnXkFtZTgwNjU5OTg2NDE@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_29zi",
+    "title": "Shrek",
+    "originalTitle": "Shrek",
+    "year": 2001,
+    "director": "Andrew Adamson, Vicky Jenson",
+    "rating": 4.12,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BN2FkMTRkNTUtYTI0NC00ZjI4LWI5MzUtMDFmOGY0NmU2OGY1XkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_8MHs",
+    "title": "Black Panther",
+    "originalTitle": "Black Panther",
+    "year": 2018,
+    "director": "Ryan Coogler",
+    "rating": 3.72,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMTg1MTY2MjYzNV5BMl5BanBnXkFtZTgwMTc4NTMwNDI@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_zanS",
+    "title": "The Substance",
+    "originalTitle": "The Substance",
+    "year": 2024,
+    "director": "Coralie Fargeat",
+    "rating": 3.72,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BZDQ1NGE5MGMtYzdlZC00ODExLWJlMDMtNWU4NjA5OWYwMDEwXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_1UNE",
+    "title": "The Notebook",
+    "originalTitle": "The Notebook",
+    "year": 2004,
+    "director": "Nick Cassavetes",
+    "rating": 3.89,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BZjE0ZjgzMzYtMTAxYi00NGMzLThmZDktNzFlMzA2MWRmYWQ0XkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_2b5u",
+    "title": "The Lord of the Rings: The Return of the King",
+    "originalTitle": "The Lord of the Rings: The Return of the King",
+    "year": 2003,
+    "director": "Peter Jackson",
+    "rating": 4.56,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMTZkMjBjNWMtZGI5OC00MGU0LTk4ZTItODg2NWM3NTVmNWQ4XkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_29Fg",
+    "title": "Home Alone",
+    "originalTitle": "Home Alone",
+    "year": 1990,
+    "director": "Chris Columbus",
+    "rating": 3.87,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BNzNmNmQ2ZDEtMTc1MS00NjNiLThlMGUtZmQxNTg1Nzg5NWMzXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_27Vw",
+    "title": "The Empire Strikes Back",
+    "originalTitle": "The Empire Strikes Back",
+    "year": 1980,
+    "director": "Irvin Kershner",
+    "rating": 4.4,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMTkxNGFlNDktZmJkNC00MDdhLTg0MTEtZjZiYWI3MGE5NWIwXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_9fOC",
+    "title": "Deadpool",
+    "originalTitle": "Deadpool",
+    "year": 2016,
+    "director": "Tim Miller",
+    "rating": 3.71,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BNzY3ZWU5NGQtOTViNC00ZWVmLTliNjAtNzViNzlkZWQ4YzQ4XkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_15gO",
+    "title": "Tangled",
+    "originalTitle": "Tangled",
+    "year": 2010,
+    "director": "Byron Howard, Nathan Greno",
+    "rating": 4.07,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMTAxNDYxMjg0MjNeQTJeQWpwZ15BbWU3MDcyNTk2OTM@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_24u8",
+    "title": "Pride & Prejudice",
+    "originalTitle": "Pride & Prejudice",
+    "year": 2005,
+    "director": "Joe Wright",
+    "rating": 4.15,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BZmQ4MzVmN2MtZjQ5Ni00MzJmLWE0ODItYTg3ODhlMjU3YTEwXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_hNVe",
+    "title": "Hereditary",
+    "originalTitle": "Hereditary",
+    "year": 2018,
+    "director": "Ari Aster",
+    "rating": 3.92,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BNTEyZGQwODctYWJjZi00NjFmLTg3YmEtMzlhNjljOGZhMWMyXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_2b5E",
+    "title": "The Lord of the Rings: The Two Towers",
+    "originalTitle": "The Lord of the Rings: The Two Towers",
+    "year": 2002,
+    "director": "Peter Jackson",
+    "rating": 4.44,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMGQxMDdiOWUtYjc1Ni00YzM1LWE2NjMtZTg3Y2JkMjEzMTJjXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_29qA",
+    "title": "Toy Story",
+    "originalTitle": "Toy Story",
+    "year": 1995,
+    "director": "John Lasseter",
+    "rating": 4.11,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BZTA3OWVjOWItNjE1NS00NzZiLWE1MjgtZDZhMWI1ZTlkNzYwXkEyXkFqcGc@._V1_UX600_.jpg"
+  },
+  {
+    "id": "boxd_24EC",
+    "title": "Scream",
+    "originalTitle": "Scream",
+    "year": 1996,
+    "director": "Wes Craven",
+    "rating": 4.02,
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMjA2NjU5MTg5OF5BMl5BanBnXkFtZTgwOTkyMzQxMDE@._V1_UX600_.jpg"
   }
 ]
