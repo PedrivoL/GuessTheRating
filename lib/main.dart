@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 
 void main() {
   runApp(const MyApp());
 }
+
+@Preview(name: 'App Mobile Preview', size: Size(390, 844))
+Widget appPreview() => const MyApp();
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
