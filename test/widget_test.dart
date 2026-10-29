@@ -184,6 +184,7 @@ void main() {
       // Acerta a primeira rodada tocando diretamente no card do filme vencedor
       await tester.tap(find.byKey(winningKey));
       await tester.pump();
+      expect(find.text('Acertou!'), findsNothing);
       await tester.pump(const Duration(milliseconds: 150));
 
       expect(vm.score, equals(1));
@@ -202,6 +203,7 @@ void main() {
 
       await tester.tap(find.byKey(losingKey));
       await tester.pump();
+      expect(find.text('Errou!'), findsNothing);
       await tester.pump(const Duration(milliseconds: 150));
 
       expect(find.text('FIM DE JOGO!'), findsOneWidget);

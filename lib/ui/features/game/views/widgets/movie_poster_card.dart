@@ -125,12 +125,6 @@ class MoviePosterCard extends StatelessWidget {
                     },
                   ),
                 ),
-                if (lastGuessCorrect != null && isSelected)
-                  Positioned(
-                    top: 12,
-                    right: 12,
-                    child: _FeedbackBadge(isCorrect: lastGuessCorrect!),
-                  ),
               ],
             ),
           ),
@@ -440,44 +434,6 @@ class _RatingBadgeSection extends StatelessWidget {
           ),
         ],
       ],
-    );
-  }
-}
-
-class _FeedbackBadge extends StatelessWidget {
-  const _FeedbackBadge({required this.isCorrect});
-
-  final bool isCorrect;
-
-  @override
-  Widget build(BuildContext context) {
-    final bgColor = isCorrect ? AppColors.letterboxdGreen : AppColors.errorRed;
-    final fgColor = isCorrect ? AppColors.background : Colors.white;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.zero,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded,
-            size: 16,
-            color: fgColor,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            isCorrect ? 'Acertou!' : 'Errou!',
-            style: TextStyle(
-              color: fgColor,
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
