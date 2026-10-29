@@ -11,6 +11,7 @@ abstract final class AppColors {
   static const Color letterboxdOrange = Color(0xFFFF8000);
   static const Color letterboxdGreen = Color(0xFF00E054);
   static const Color letterboxdBlue = Color(0xFF40BCF4);
+  static const Color trophyYellow = Color(0xFFFFD54F);
 
   static const Color errorRed = Color(0xFFFF4D4F);
   static const Color textPrimary = Color(0xFFF4F7FA);

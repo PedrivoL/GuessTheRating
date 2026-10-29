@@ -52,9 +52,7 @@ class ScoreHeader extends StatelessWidget {
               _ScorePill(
                 key: const Key('current_score_pill'),
                 icon: Icons.local_fire_department_rounded,
-                iconColor: score > 0
-                    ? AppColors.letterboxdGreen
-                    : AppColors.textSecondary,
+                iconColor: AppColors.letterboxdOrange,
                 label: 'Acertos',
                 value: '$score',
                 highlighted: false,
@@ -63,7 +61,7 @@ class ScoreHeader extends StatelessWidget {
               _ScorePill(
                 key: const Key('high_score_pill'),
                 icon: Icons.emoji_events_rounded,
-                iconColor: AppColors.letterboxdOrange,
+                iconColor: AppColors.trophyYellow,
                 label: isNewRecord ? 'Novo Recorde!' : 'Recorde',
                 value: '$highScore',
                 highlighted: isNewRecord,
@@ -99,11 +97,11 @@ class _ScorePill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: highlighted
-            ? AppColors.letterboxdOrange.withValues(alpha: 0.18)
+            ? AppColors.trophyYellow.withValues(alpha: 0.18)
             : AppColors.surfaceElevated,
         borderRadius: BorderRadius.zero,
         border: Border.all(
-          color: highlighted ? AppColors.letterboxdOrange : AppColors.border,
+          color: highlighted ? AppColors.trophyYellow : AppColors.border,
         ),
       ),
       child: Row(
