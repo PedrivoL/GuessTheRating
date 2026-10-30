@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// Paleta inspirada na identidade visual escura do Letterboxd.
+
 abstract final class AppColors {
   static const Color background = Color(0xFF14181C);
   static const Color surface = Color(0xFF1C2228);
   static const Color surfaceElevated = Color(0xFF283038);
   static const Color border = Color(0xFF38424D);
 
-  // Trio clássico de cores do Letterboxd
   static const Color letterboxdOrange = Color(0xFFFF8000);
   static const Color letterboxdGreen = Color(0xFF00E054);
   static const Color letterboxdBlue = Color(0xFF40BCF4);
