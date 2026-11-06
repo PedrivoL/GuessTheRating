@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
+import 'package:my_first_app/data/repositories/account_repository.dart';
 import 'package:my_first_app/data/repositories/movie_repository.dart';
 import 'package:my_first_app/data/repositories/score_repository.dart';
+import 'package:my_first_app/data/repositories/watched_profile_repository.dart';
+import 'package:my_first_app/data/services/account_service.dart';
 import 'package:my_first_app/data/services/movie_catalog_service.dart';
 import 'package:my_first_app/data/services/score_storage_service.dart';
+import 'package:my_first_app/data/services/watched_profile_service.dart';
 import 'package:my_first_app/ui/core/theme/app_theme.dart';
 import 'package:my_first_app/ui/features/game/view_models/game_view_model.dart';
 import 'package:my_first_app/ui/features/game/views/game_screen.dart';
@@ -80,6 +84,12 @@ class _MyAppState extends State<MyApp> {
       ),
       scoreRepository: ScoreRepository(
         storageService: const SharedPreferencesScoreService(),
+      ),
+      watchedProfileRepository: WatchedProfileRepository(
+        storageService: const SharedPrefsWatchedProfileService(),
+      ),
+      accountRepository: AccountRepository(
+        accountService: const SharedPrefsAccountService(),
       ),
     );
     _ownedViewModel = vm;

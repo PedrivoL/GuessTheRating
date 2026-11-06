@@ -1,11 +1,18 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'package:my_first_app/data/repositories/account_repository.dart';
 import 'package:my_first_app/data/repositories/movie_repository.dart';
 import 'package:my_first_app/data/repositories/score_repository.dart';
+import 'package:my_first_app/data/repositories/watched_profile_repository.dart';
+import 'package:my_first_app/data/services/account_service.dart';
+import 'package:my_first_app/data/services/film_html_fetcher.dart';
 import 'package:my_first_app/data/services/movie_catalog_service.dart';
 import 'package:my_first_app/data/services/score_storage_service.dart';
+import 'package:my_first_app/data/services/watched_profile_service.dart';
 import 'package:my_first_app/domain/models/movie.dart';
+import 'package:my_first_app/domain/models/user_account.dart';
+import 'package:my_first_app/domain/models/watched_profile.dart';
 
 enum GamePhase {
   loading,
@@ -20,10 +27,21 @@ class GameViewModel extends ChangeNotifier {
   GameViewModel({
     required this._movieRepository,
     required this._scoreRepository,
+    WatchedProfileRepository? watchedProfileRepository,
+    AccountRepository? accountRepository,
+    this.filmHtmlFetcher = fetchLetterboxdFilmHtml,
     Random? random,
     this.revealDelay = const Duration(milliseconds: 1200),
     this.gameOverDelay = const Duration(milliseconds: 900),
-  }) : _random = random ?? Random();
+  }) : _watchedProfileRepository =
+           watchedProfileRepository ??
+           WatchedProfileRepository(
+             storageService: InMemoryWatchedProfileService(),
+           ),
+       _accountRepository =
+           accountRepository ??
+           AccountRepository(accountService: InMemoryAccountService()),
+       _random = random ?? Random();
 
   /// Construtor síncrono auxiliar para o Flutter Widget Preview.
   factory GameViewModel.preview({
@@ -59,11 +77,16 @@ class GameViewModel extends ChangeNotifier {
 
   final MovieRepository _movieRepository;
   final ScoreRepository _scoreRepository;
+  final WatchedProfileRepository _watchedProfileRepository;
+  final AccountRepository _accountRepository;
+  final FilmHtmlFetcherCallback filmHtmlFetcher;
   final Random _random;
   final Duration revealDelay;
   final Duration gameOverDelay;
 
   List<Movie> _allMovies = const [];
+  WatchedProfile? _watchedProfile;
+  UserAccount? _currentAccount;
   final List<Movie> _deck = [];
   Timer? _transitionTimer;
   bool _isDisposed = false;
@@ -96,6 +119,48 @@ class GameViewModel extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  WatchedProfile? get watchedProfile => _watchedProfile;
+  UserAccount? get currentAccount => _currentAccount;
+
+  /// Catálogo base somado a quaisquer filmes extras buscados do `watched.csv` do jogador.
+  List<Movie> get combinedCatalog {
+    final custom = _watchedProfile?.customMovies ?? const <Movie>[];
+    final accountCustom = _currentAccount?.customMovies ?? const <Movie>[];
+    if (custom.isEmpty && accountCustom.isEmpty) return _allMovies;
+    final byId = <String, Movie>{
+      for (final m in _allMovies) m.id: m,
+      for (final m in accountCustom) m.id: m,
+      for (final m in custom) m.id: m,
+    };
+    return byId.values.toList(growable: false);
+  }
+
+  List<Movie> get _activeMovies {
+    final profile = _watchedProfile;
+    final catalog = combinedCatalog;
+    if (profile != null && profile.isActive) {
+      final idSet = profile.watchedMovieIds.toSet();
+      final filtered = catalog
+          .where((m) => idSet.contains(m.id))
+          .toList(growable: false);
+      if (filtered.length >= 2) {
+        return filtered;
+      }
+    }
+    return _allMovies;
+  }
+
+  bool get isUsingWatchedPool {
+    final profile = _watchedProfile;
+    if (profile == null || !profile.isActive) return false;
+    final idSet = profile.watchedMovieIds.toSet();
+    final matchCount = combinedCatalog.where((m) => idSet.contains(m.id)).length;
+    return matchCount >= 2;
+  }
+
+  int get activePoolCount => _activeMovies.length;
+  int get totalCatalogCount => _allMovies.length;
+
   bool get isCurrentRatingVisible =>
       _score > 0 ||
       _phase == GamePhase.revealing ||
@@ -118,21 +183,29 @@ class GameViewModel extends ChangeNotifier {
     _safeNotifyListeners();
 
     try {
-      final results = await Future.wait<Object>([
+      final results = await Future.wait<Object?>([
         _movieRepository.getMovies(),
         _scoreRepository.getHighScore(),
+        _watchedProfileRepository.getProfile(),
+        _accountRepository.getActiveAccount(),
       ]);
       if (_isDisposed || generation != _runGeneration) return;
 
-      final movies = results[0] as List<Movie>;
-      final savedHighScore = results[1] as int;
+      final movies = results[0]! as List<Movie>;
+      final savedHighScore = results[1]! as int;
+      final savedProfile = results[2] as WatchedProfile?;
+      final savedAccount = results[3] as UserAccount?;
 
       if (movies.length < 2) {
         throw StateError('O catálogo precisa ter pelo menos 2 filmes.');
       }
 
       _allMovies = movies;
-      _highScore = savedHighScore;
+      _currentAccount = savedAccount;
+      _highScore = (savedAccount != null && savedAccount.highScore > savedHighScore)
+          ? savedAccount.highScore
+          : savedHighScore;
+      _watchedProfile = savedProfile ?? savedAccount?.toWatchedProfile();
       _startNewRun();
     } catch (e) {
       if (_isDisposed || generation != _runGeneration) return;
@@ -140,6 +213,285 @@ class GameViewModel extends ChangeNotifier {
       _phase = GamePhase.error;
       _safeNotifyListeners();
     }
+  }
+
+  /// Processa o `watched.csv` e carrega imediatamente do Letterboxd todos os filmes
+  /// que ainda não estão no `movies.json`.
+  Future<WatchedCsvMatchResult> resolveWatchedCsv(
+    String csvContent, {
+    void Function(int completed, int total)? onLookupProgress,
+  }) async {
+    final initialResult = WatchedCsvParser.matchAgainstCatalog(
+      csvContent: csvContent,
+      catalog: combinedCatalog,
+    );
+
+    final newlyFetched = <Movie>[];
+    final remainingUnmatched = <UnmatchedCsvFilm>[];
+
+    if (initialResult.unmatchedEntries.isNotEmpty) {
+      final entries = initialResult.unmatchedEntries;
+      final total = entries.length;
+      var nextIdx = 0;
+      var completed = 0;
+      onLookupProgress?.call(0, total);
+
+      Future<void> worker() async {
+        while (true) {
+          if (_isDisposed) break;
+          final i = nextIdx++;
+          if (i >= total) break;
+          final entry = entries[i];
+          Movie? resolved;
+          try {
+            final html = await filmHtmlFetcher(entry.letterboxdUri);
+            if (html != null && html.isNotEmpty) {
+              resolved = WatchedCsvParser.parseMovieFromLetterboxdHtml(
+                entry: entry,
+                html: html,
+              );
+            }
+          } catch (_) {}
+
+          if (resolved != null) {
+            newlyFetched.add(resolved);
+          } else {
+            remainingUnmatched.add(entry);
+          }
+          completed++;
+          onLookupProgress?.call(completed, total);
+        }
+      }
+
+      final concurrency = min(4, total);
+      await Future.wait(List.generate(concurrency, (_) => worker()));
+    }
+
+    final allMatchedById = <String, Movie>{
+      for (final m in initialResult.matchedMovies) m.id: m,
+      for (final m in newlyFetched) m.id: m,
+    };
+
+    return WatchedCsvMatchResult(
+      matchedMovies: allMatchedById.values.toList(growable: false),
+      unmatchedEntries: remainingUnmatched,
+      totalCsvRows: initialResult.totalCsvRows,
+    );
+  }
+
+  List<Movie> _extractCustomMovies(WatchedCsvMatchResult resolvedResult) {
+    final baseIds = {for (final m in _allMovies) m.id};
+    final customById = <String, Movie>{
+      for (final m in (_watchedProfile?.customMovies ?? const <Movie>[]))
+        m.id: m,
+      for (final m in (_currentAccount?.customMovies ?? const <Movie>[]))
+        m.id: m,
+      for (final m in resolvedResult.matchedMovies)
+        if (!baseIds.contains(m.id)) m.id: m,
+    };
+    return customById.values.toList(growable: false);
+  }
+
+  /// Cria (ou atualiza) uma conta com `@nick` + senha/PIN e o `watched.csv` carregado.
+  Future<UserAccount> registerAccountWithCsv({
+    required String username,
+    required String password,
+    required WatchedCsvMatchResult resolvedResult,
+  }) async {
+    if (resolvedResult.matchedMovies.length < 2) {
+      throw const FormatException(
+        'Encontrados menos de 2 filmes compatíveis no arquivo watched.csv.',
+      );
+    }
+
+    final customMovies = _extractCustomMovies(resolvedResult);
+    final watchedIds = resolvedResult.matchedMovies
+        .map((m) => m.id)
+        .toList(growable: false);
+
+    final account = await _accountRepository.registerAccount(
+      username: username,
+      password: password,
+      watchedMovieIds: watchedIds,
+      totalCsvCount: resolvedResult.totalCsvRows,
+      customMovies: customMovies,
+      initialHighScore: _highScore,
+    );
+
+    final profile = account.toWatchedProfile(isActive: true);
+    await _watchedProfileRepository.saveProfile(profile);
+    if (_isDisposed) return account;
+
+    _currentAccount = account;
+    if (account.highScore > _highScore) {
+      _highScore = account.highScore;
+      await _scoreRepository.registerScore(_highScore);
+    }
+    _watchedProfile = profile;
+    _startNewRun();
+    return account;
+  }
+
+  /// Faz login em uma conta existente por `@nick` + senha/PIN, restaurando a pool de filmes e o recorde.
+  Future<UserAccount> loginAccount({
+    required String username,
+    required String password,
+  }) async {
+    final account = await _accountRepository.login(
+      username: username,
+      password: password,
+    );
+    final profile = account.toWatchedProfile(isActive: true);
+    await _watchedProfileRepository.saveProfile(profile);
+    if (_isDisposed) return account;
+
+    _currentAccount = account;
+    if (account.highScore > _highScore) {
+      _highScore = account.highScore;
+      await _scoreRepository.registerScore(_highScore);
+    }
+    _watchedProfile = profile;
+    _startNewRun();
+    return account;
+  }
+
+  /// Encerra a sessão da conta atual no dispositivo.
+  Future<void> logoutAccount() async {
+    await _accountRepository.logout();
+    if (_isDisposed) return;
+    _currentAccount = null;
+    _safeNotifyListeners();
+  }
+
+  /// Carrega a pool de filmes apenas pelo `@nick` (caso o perfil já tenha sido cadastrado em uma conta),
+  /// sem exigir senha nem reenvio do `watched.csv`.
+  Future<void> loadPoolByNick(String username) async {
+    final norm = UserAccount.normalizeUsername(username);
+    if (norm.isEmpty) {
+      throw const FormatException('Digite um @nick do Letterboxd.');
+    }
+
+    final account = await _accountRepository.findAccountByUsername(norm);
+    if (account != null) {
+      final profile = account.toWatchedProfile(isActive: true);
+      await _watchedProfileRepository.saveProfile(profile);
+      if (_isDisposed) return;
+      _watchedProfile = profile;
+      _startNewRun();
+      return;
+    }
+
+    final existingProfile = _watchedProfile;
+    if (existingProfile != null &&
+        UserAccount.normalizeUsername(existingProfile.username) == norm) {
+      await setWatchedPoolActive(true);
+      return;
+    }
+
+    throw FormatException(
+      'O nick @$norm ainda não possui watched.csv salvo. Crie sua Conta ao lado ou selecione o arquivo watched.csv uma vez.',
+    );
+  }
+
+  /// Aplica o resultado já carregado do `watched.csv`, salva no perfil do jogador e inicia a partida.
+  Future<WatchedCsvMatchResult> applyResolvedWatchedCsv({
+    required String username,
+    required WatchedCsvMatchResult resolvedResult,
+  }) async {
+    final cleanUsername = UserAccount.normalizeUsername(username);
+    final effectiveUsername = cleanUsername.isEmpty ? 'voce' : cleanUsername;
+
+    if (resolvedResult.matchedMovies.length < 2) {
+      throw const FormatException(
+        'Encontrados menos de 2 filmes compatíveis. Verifique se selecionou o arquivo watched.csv exportado do Letterboxd.',
+      );
+    }
+
+    final customMovies = _extractCustomMovies(resolvedResult);
+    final watchedIds = resolvedResult.matchedMovies
+        .map((m) => m.id)
+        .toList(growable: false);
+
+    final profile = WatchedProfile(
+      username: effectiveUsername,
+      watchedMovieIds: watchedIds,
+      totalCsvCount: resolvedResult.totalCsvRows,
+      customMovies: customMovies,
+      isActive: true,
+    );
+
+    await _watchedProfileRepository.saveProfile(profile);
+
+    final activeAccount = _currentAccount;
+    if (activeAccount != null && activeAccount.username == effectiveUsername) {
+      final updatedAcc = activeAccount.copyWith(
+        watchedMovieIds: watchedIds,
+        totalCsvCount: resolvedResult.totalCsvRows,
+        customMovies: customMovies,
+      );
+      _currentAccount = await _accountRepository.updateAccount(updatedAcc);
+    }
+
+    if (_isDisposed) return resolvedResult;
+
+    _watchedProfile = profile;
+    _startNewRun();
+    return resolvedResult;
+  }
+
+  /// Importa o `watched.csv` do jogador carregando imediatamente os filmes fora do `movies.json`.
+  Future<WatchedCsvMatchResult> importWatchedCsv({
+    required String username,
+    required String csvContent,
+    void Function(int completed, int total)? onLookupProgress,
+  }) async {
+    final resolved = await resolveWatchedCsv(
+      csvContent,
+      onLookupProgress: onLookupProgress,
+    );
+    return applyResolvedWatchedCsv(
+      username: username,
+      resolvedResult: resolved,
+    );
+  }
+
+  /// Alterna entre a pool de filmes assistidos do jogador e o catálogo geral.
+  Future<void> setWatchedPoolActive(bool active) async {
+    final currentProfile = _watchedProfile;
+    if (currentProfile == null || currentProfile.isActive == active) return;
+
+    final updated = currentProfile.copyWith(isActive: active);
+    await _watchedProfileRepository.saveProfile(updated);
+    if (_isDisposed) return;
+
+    _watchedProfile = updated;
+    _startNewRun();
+  }
+
+  /// Atualiza o nick salvo sem precisar reimportar o arquivo `watched.csv`.
+  Future<void> updateProfileUsername(String username) async {
+    final currentProfile = _watchedProfile;
+    if (currentProfile == null) return;
+    final cleanUsername = UserAccount.normalizeUsername(username);
+    if (cleanUsername.isEmpty || cleanUsername == currentProfile.username) {
+      return;
+    }
+
+    final updated = currentProfile.copyWith(username: cleanUsername);
+    await _watchedProfileRepository.saveProfile(updated);
+    if (_isDisposed) return;
+
+    _watchedProfile = updated;
+    _safeNotifyListeners();
+  }
+
+  /// Remove o perfil salvo e volta para o catálogo geral.
+  Future<void> clearWatchedProfile() async {
+    await _watchedProfileRepository.clearProfile();
+    if (_isDisposed) return;
+
+    _watchedProfile = null;
+    _startNewRun();
   }
 
   void _startNewRun() {
@@ -160,7 +512,7 @@ class GameViewModel extends ChangeNotifier {
   void _refillDeck({Movie? exclude}) {
     _deck
       ..clear()
-      ..addAll(_allMovies);
+      ..addAll(_activeMovies);
     if (exclude != null) {
       _deck.removeWhere((m) => m.id == exclude.id);
     }
@@ -212,9 +564,15 @@ class GameViewModel extends ChangeNotifier {
       final beatRecord = await _scoreRepository.registerScore(_score);
       if (_isDisposed || generation != _runGeneration) return;
 
-      if (beatRecord) {
+      if (beatRecord || _score > _highScore) {
         _highScore = _score;
         _isNewRecord = true;
+        final acc = _currentAccount;
+        if (acc != null && _highScore > acc.highScore) {
+          final updatedAcc = acc.copyWith(highScore: _highScore);
+          _currentAccount = updatedAcc;
+          unawaited(_accountRepository.updateAccount(updatedAcc));
+        }
       }
       _safeNotifyListeners();
 

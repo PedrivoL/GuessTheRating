@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:my_first_app/ui/core/theme/app_theme.dart';
 import 'package:my_first_app/ui/features/game/views/widgets/letterboxd_dots.dart';
 
-/// Barra superior com título do jogo, placar da rodada atual e recorde salvo.
+/// Barra superior com título do jogo, botões de Conta e Perfil do Letterboxd, placar atual e recorde.
 class ScoreHeader extends StatelessWidget {
   const ScoreHeader({
     super.key,
@@ -10,12 +10,20 @@ class ScoreHeader extends StatelessWidget {
     required this.highScore,
     required this.isNewRecord,
     required this.onRestart,
+    required this.onOpenProfile,
+    required this.onOpenAccount,
+    this.activeUsername,
+    this.loggedInAccountUsername,
   });
 
   final int score;
   final int highScore;
   final bool isNewRecord;
   final VoidCallback onRestart;
+  final VoidCallback onOpenProfile;
+  final VoidCallback onOpenAccount;
+  final String? activeUsername;
+  final String? loggedInAccountUsername;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +60,16 @@ class ScoreHeader extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
+              _AccountButton(
+                loggedInUsername: loggedInAccountUsername,
+                onPressed: onOpenAccount,
+              ),
+              _ProfilePoolButton(
+                activeUsername: activeUsername,
+                onPressed: onOpenProfile,
+              ),
               _ScorePill(
                 key: const Key('current_score_pill'),
                 icon: Icons.local_fire_department_rounded,
@@ -61,7 +78,6 @@ class ScoreHeader extends StatelessWidget {
                 value: '$score',
                 highlighted: false,
               ),
-              const SizedBox(width: 8),
               _ScorePill(
                 key: const Key('high_score_pill'),
                 icon: Icons.emoji_events_rounded,
@@ -104,6 +120,135 @@ class _RestartRunButton extends StatelessWidget {
               Icons.refresh_rounded,
               size: 17,
               color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AccountButton extends StatelessWidget {
+  const _AccountButton({
+    required this.loggedInUsername,
+    required this.onPressed,
+  });
+
+  final String? loggedInUsername;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final isLogged =
+        loggedInUsername != null && loggedInUsername!.isNotEmpty;
+    return Tooltip(
+      message: isLogged
+          ? 'Conta conectada: @$loggedInUsername'
+          : 'Criar conta ou entrar com @nick e senha',
+      child: Material(
+        color: isLogged
+            ? AppColors.letterboxdOrange.withValues(alpha: 0.16)
+            : AppColors.surfaceElevated,
+        child: InkWell(
+          key: const Key('btn_account'),
+          onTap: onPressed,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.zero,
+              border: Border.all(
+                color: isLogged
+                    ? AppColors.letterboxdOrange
+                    : AppColors.border,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isLogged
+                      ? Icons.verified_user_rounded
+                      : Icons.lock_outline_rounded,
+                  size: 15,
+                  color: isLogged
+                      ? AppColors.letterboxdOrange
+                      : AppColors.textSecondary,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  isLogged ? 'Conta: @$loggedInUsername' : 'Conta',
+                  style: TextStyle(
+                    color: isLogged
+                        ? AppColors.letterboxdOrange
+                        : AppColors.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfilePoolButton extends StatelessWidget {
+  const _ProfilePoolButton({
+    required this.activeUsername,
+    required this.onPressed,
+  });
+
+  final String? activeUsername;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = activeUsername != null && activeUsername!.isNotEmpty;
+    return Tooltip(
+      message: isActive
+          ? 'Jogando com filmes de @$activeUsername (toque para alterar)'
+          : 'Usar seus filmes assistidos do Letterboxd',
+      child: Material(
+        color: isActive
+            ? AppColors.letterboxdGreen.withValues(alpha: 0.16)
+            : AppColors.surfaceElevated,
+        child: InkWell(
+          key: const Key('btn_letterboxd_profile'),
+          onTap: onPressed,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.zero,
+              border: Border.all(
+                color: isActive ? AppColors.letterboxdGreen : AppColors.border,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isActive
+                      ? Icons.person_rounded
+                      : Icons.person_outline_rounded,
+                  size: 16,
+                  color: isActive
+                      ? AppColors.letterboxdGreen
+                      : AppColors.letterboxdBlue,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  isActive ? '@$activeUsername' : 'Seu @nick',
+                  style: TextStyle(
+                    color: isActive
+                        ? AppColors.letterboxdGreen
+                        : AppColors.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

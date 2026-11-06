@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:my_first_app/ui/core/theme/app_theme.dart';
+import 'package:my_first_app/ui/core/utils/csv_file_picker.dart';
 import 'package:my_first_app/ui/features/game/view_models/game_view_model.dart';
+import 'package:my_first_app/ui/features/game/views/widgets/account_dialog.dart';
 import 'package:my_first_app/ui/features/game/views/widgets/game_over_overlay.dart';
+import 'package:my_first_app/ui/features/game/views/widgets/letterboxd_profile_dialog.dart';
 import 'package:my_first_app/ui/features/game/views/widgets/movie_poster_card.dart';
 import 'package:my_first_app/ui/features/game/views/widgets/score_header.dart';
 
@@ -10,9 +13,34 @@ const double _wideLayoutBreakpoint = 720.0;
 
 /// Tela principal adaptativa (Android vertical + Web/Desktop lado a lado).
 class GameScreen extends StatelessWidget {
-  const GameScreen({super.key, required this.viewModel});
+  const GameScreen({
+    super.key,
+    required this.viewModel,
+    this.csvFilePicker = pickCsvFile,
+  });
 
   final GameViewModel viewModel;
+  final CsvFilePickerCallback csvFilePicker;
+
+  void _openProfileDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => LetterboxdProfileDialog(
+        viewModel: viewModel,
+        csvFilePicker: csvFilePicker,
+      ),
+    );
+  }
+
+  void _openAccountDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => AccountDialog(
+        viewModel: viewModel,
+        csvFilePicker: csvFilePicker,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -123,6 +151,13 @@ class GameScreen extends StatelessWidget {
                     highScore: viewModel.highScore,
                     isNewRecord: viewModel.isNewRecord,
                     onRestart: viewModel.restartGame,
+                    onOpenProfile: () => _openProfileDialog(context),
+                    onOpenAccount: () => _openAccountDialog(context),
+                    activeUsername: viewModel.isUsingWatchedPool
+                        ? viewModel.watchedProfile?.username
+                        : null,
+                    loggedInAccountUsername:
+                        viewModel.currentAccount?.username,
                   ),
                 ),
                 Expanded(

@@ -1,0 +1,147 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// This security rules file assumes the following data structures:
+//
+// Collection: accounts
+// Document ID: {username} (normalized lowercase Letterboxd username, 1..40 chars)
+// Fields:
+//   - username: string (required, immutable, size 1..40, must equal {username} doc ID) - Account username
+//   - passwordHash: string (required, immutable, exact size 32 hex string) - 32-char hex password hash
+//   - watchedMovieIds: list (required, max 5000 items) - List of watched movie IDs from Letterboxd import
+//   - totalCsvCount: int (required, range 0..50000) - Total count of CSV diary/watched entries processed
+//   - customMovies: list (required, max 2000 items) - List of custom movies outside top pool
+//   - highScore: int (required, range 0..10000) - Best Endless Streak score for this account
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user owns the resource (for user-owned documents)
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Check if user is owner based on document's uid field
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    // Verify UID hasn't been tampered with on create
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) ||
+        request.resource.data.uid == request.auth.uid;
+    }
+
+    // Ensure uid field is not modified on update
+    function uidNotModified() {
+      return !('uid' in request.resource.data) ||
+        request.resource.data.uid == resource.data.uid;
+    }
+
+    // Validate required fields exist
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // Validate that the document contains only the allowed fields
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // Validate string length
+    function validStringLength(field, minLen, maxLen) {
+      return request.resource.data[field] is string &&
+        request.resource.data[field].size() >= minLen &&
+        request.resource.data[field].size() <= maxLen;
+    }
+
+    // Validate that a list is a list and enforces size limits
+    function isValidList(list, maxSize) {
+      return list is list && list.size() <= maxSize;
+    }
+
+    // Validate that immutable fields have not changed on update
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidAccount(data, username) {
+      let allowedFields = [
+        'username',
+        'passwordHash',
+        'watchedMovieIds',
+        'totalCsvCount',
+        'customMovies',
+        'highScore'
+      ];
+      return hasRequiredFields(allowedFields) &&
+        hasOnlyAllowedFields(allowedFields) &&
+        username is string &&
+        username.size() >= 1 &&
+        username.size() <= 40 &&
+        data.username is string &&
+        data.username.size() >= 1 &&
+        data.username.size() <= 40 &&
+        data.username == username &&
+        data.passwordHash is string &&
+        data.passwordHash.size() == 32 &&
+        data.passwordHash.matches('^[a-fA-F0-9]{32}$') &&
+        isValidList(data.watchedMovieIds, 5000) &&
+        data.totalCsvCount is int &&
+        data.totalCsvCount >= 0 &&
+        data.totalCsvCount <= 50000 &&
+        isValidList(data.customMovies, 2000) &&
+        data.highScore is int &&
+        data.highScore >= 0 &&
+        data.highScore <= 10000;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Default deny all reads and writes across the database
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Account profiles & Letterboxd pools
+    match /accounts/{username} {
+      // Allow looking up a specific account by @nick to load its movie pool or verify login
+      allow get: if true;
+
+      // Prevent enumerating all accounts
+      allow list: if false;
+
+      // Create new account with strict schema & field validation
+      allow create: if isValidAccount(request.resource.data, username);
+
+      // Update existing account only if schema is valid and username + passwordHash remain unchanged
+      allow update: if isValidAccount(request.resource.data, username) &&
+        areImmutableFieldsUnchanged(['username', 'passwordHash']) &&
+        request.resource.data.username == resource.data.username &&
+        request.resource.data.passwordHash == resource.data.passwordHash;
+
+      // Disallow deleting accounts
+      allow delete: if false;
+    }
+  }
+}

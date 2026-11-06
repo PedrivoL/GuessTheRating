@@ -1,13 +1,22 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_first_app/data/repositories/account_repository.dart';
 import 'package:my_first_app/data/repositories/movie_repository.dart';
 import 'package:my_first_app/data/repositories/score_repository.dart';
+import 'package:my_first_app/data/repositories/watched_profile_repository.dart';
+import 'package:my_first_app/data/services/account_service.dart';
+import 'package:my_first_app/data/services/firestore_rest_client.dart';
 import 'package:my_first_app/data/services/movie_catalog_service.dart';
 import 'package:my_first_app/data/services/score_storage_service.dart';
+import 'package:my_first_app/data/services/watched_profile_service.dart';
 import 'package:my_first_app/domain/models/movie.dart';
+import 'package:my_first_app/domain/models/user_account.dart';
 import 'package:my_first_app/main.dart';
+import 'package:my_first_app/ui/core/theme/app_theme.dart';
+import 'package:my_first_app/ui/core/utils/csv_file_picker.dart';
 import 'package:my_first_app/ui/features/game/view_models/game_view_model.dart';
+import 'package:my_first_app/ui/features/game/views/game_screen.dart';
 
 void main() {
   const sampleMovies = <Movie>[
@@ -48,6 +57,27 @@ void main() {
       expect(parsed.id, equals('m1'));
       expect(parsed.title, equals('Parasita'));
       expect(parsed.rating, equals(4.6));
+    });
+
+    test('serializa e desserializa UserAccount para documento do Cloud Firestore', () {
+      final account = UserAccount(
+        username: 'pedrivol',
+        passwordHash: UserAccount.hashPassword('pedrivol', '1234'),
+        watchedMovieIds: const ['m1', 'm2'],
+        totalCsvCount: 2,
+        customMovies: [sampleMovies.first],
+        highScore: 14,
+      );
+      final encoded = FirestoreAccountClient.encodeFirestoreDocument(account);
+      final decoded = FirestoreAccountClient.decodeFirestoreDocument(encoded);
+
+      expect(decoded, isNotNull);
+      expect(decoded!.username, equals('pedrivol'));
+      expect(decoded.verifyPassword('1234'), isTrue);
+      expect(decoded.watchedMovieIds, equals(['m1', 'm2']));
+      expect(decoded.customMovies.length, equals(1));
+      expect(decoded.customMovies.first.title, equals('Parasita'));
+      expect(decoded.highScore, equals(14));
     });
 
     test('lança FormatException para JSON inválido', () {
@@ -251,5 +281,200 @@ void main() {
       expect(vm.score, equals(0));
       expect(find.text('?.?'), findsNWidgets(2));
     });
+
+    testWidgets(
+      'permite importar watched.csv com @nick e filtra a pool de filmes do jogador',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final profileStorage = InMemoryWatchedProfileService();
+        final vm = GameViewModel(
+          movieRepository: MovieRepository(
+            catalogService: const StaticMovieCatalogService(sampleMovies),
+          ),
+          scoreRepository: ScoreRepository(
+            storageService: InMemoryScoreService(initialHighScore: 0),
+          ),
+          watchedProfileRepository: WatchedProfileRepository(
+            storageService: profileStorage,
+          ),
+          filmHtmlFetcher: (uri) async {
+            if (uri == 'https://boxd.it/i7Q4') {
+              return '''
+<script type="application/ld+json">
+/* <![CDATA[ */
+{"@type":"Movie","name":"Sound of Metal","image":"https://a.ltrbxd.com/resized/sound-of-metal.jpg","director":[{"@type":"Person","name":"Darius Marder"}],"aggregateRating":{"@type":"AggregateRating","ratingValue":4.22}}
+/* ]]> */
+</script>
+''';
+            }
+            return null;
+          },
+          random: Random(9),
+        );
+        await vm.initialize();
+        addTearDown(vm.dispose);
+
+        const csvSample = '''
+Date,Name,Year,Letterboxd URI
+2024-01-10,Parasite,2019,https://boxd.it/hTha
+2024-01-12,Barbie,2023,https://boxd.it/b234
+2024-01-15,Sound of Metal,2019,https://boxd.it/i7Q4
+''';
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.darkTheme,
+            home: GameScreen(
+              viewModel: vm,
+              csvFilePicker: () async => const PickedCsvFile(
+                name: 'watched.csv',
+                content: csvSample,
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('Seu @nick'), findsOneWidget);
+
+        // Abre o modal de perfil do Letterboxd
+        await tester.tap(find.byKey(const Key('btn_letterboxd_profile')));
+        await tester.pumpAndSettle();
+
+        expect(find.text('FILMES DO JOGADOR'), findsOneWidget);
+
+        await tester.enterText(
+          find.byKey(const Key('input_letterboxd_nick')),
+          'pedrivol',
+        );
+        await tester.tap(find.byKey(const Key('btn_pick_watched_csv')));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Selecionado: watched.csv'), findsOneWidget);
+        expect(
+          find.text('✓ 3 filmes carregados do seu watched.csv'),
+          findsOneWidget,
+        );
+
+        await tester.tap(find.byKey(const Key('btn_apply_profile')));
+        await tester.pumpAndSettle();
+
+        expect(vm.isUsingWatchedPool, isTrue);
+        expect(vm.activePoolCount, equals(3));
+        expect(find.text('@pedrivol'), findsOneWidget);
+
+        // O perfil fica salvo no storage incluindo o filme pesquisado fora do catálogo
+        final saved = await profileStorage.loadProfile();
+        expect(saved, isNotNull);
+        expect(saved!.username, equals('pedrivol'));
+        expect(saved.watchedMovieIds, equals(['m1', 'm2', 'boxd_i7Q4']));
+        expect(saved.customMovies.length, equals(1));
+        expect(saved.customMovies.first.title, equals('Sound of Metal'));
+        expect(saved.customMovies.first.rating, equals(4.22));
+      },
+    );
+
+    testWidgets(
+      'permite criar conta com @nick e senha, sair e entrar novamente sem reenviar watched.csv',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final accountService = InMemoryAccountService();
+        final vm = GameViewModel(
+          movieRepository: MovieRepository(
+            catalogService: const StaticMovieCatalogService(sampleMovies),
+          ),
+          scoreRepository: ScoreRepository(
+            storageService: InMemoryScoreService(initialHighScore: 5),
+          ),
+          accountRepository: AccountRepository(accountService: accountService),
+          random: Random(11),
+        );
+        await vm.initialize();
+        addTearDown(vm.dispose);
+
+        const csvSample = '''
+Date,Name,Year,Letterboxd URI
+2024-01-10,Parasite,2019,https://boxd.it/hTha
+2024-01-12,Barbie,2023,https://boxd.it/b234
+''';
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.darkTheme,
+            home: GameScreen(
+              viewModel: vm,
+              csvFilePicker: () async => const PickedCsvFile(
+                name: 'watched.csv',
+                content: csvSample,
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('Conta'), findsOneWidget);
+
+        // Abre o modal de Conta ao lado do botão de @nick
+        await tester.tap(find.byKey(const Key('btn_account')));
+        await tester.pumpAndSettle();
+
+        expect(find.text('CONTA DO JOGADOR'), findsOneWidget);
+
+        await tester.enterText(
+          find.byKey(const Key('input_account_nick')),
+          'pedrivol',
+        );
+        await tester.enterText(
+          find.byKey(const Key('input_account_password')),
+          '1234',
+        );
+        await tester.tap(find.byKey(const Key('btn_account_pick_csv')));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text('✓ 2 filmes carregados do seu watched.csv'),
+          findsOneWidget,
+        );
+
+        await tester.tap(find.byKey(const Key('btn_submit_account')));
+        await tester.pumpAndSettle();
+
+        expect(vm.currentAccount?.username, equals('pedrivol'));
+        expect(find.text('Conta: @pedrivol'), findsOneWidget);
+        expect(find.text('@pedrivol'), findsOneWidget);
+        expect(vm.activePoolCount, equals(2));
+
+        // Faz logout e limpa o perfil local
+        await vm.logoutAccount();
+        await vm.clearWatchedProfile();
+        await tester.pumpAndSettle();
+
+        expect(vm.currentAccount, isNull);
+        expect(vm.activePoolCount, equals(3));
+
+        // Entra novamente apenas com @nick e senha (sem reenviar watched.csv)
+        await tester.tap(find.byKey(const Key('btn_account')));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const Key('tab_login_account')));
+        await tester.pump();
+        await tester.enterText(
+          find.byKey(const Key('input_account_nick')),
+          'pedrivol',
+        );
+        await tester.enterText(
+          find.byKey(const Key('input_account_password')),
+          '1234',
+        );
+        await tester.tap(find.byKey(const Key('btn_submit_account')));
+        await tester.pumpAndSettle();
+
+        expect(vm.currentAccount?.username, equals('pedrivol'));
+        expect(vm.isUsingWatchedPool, isTrue);
+        expect(vm.activePoolCount, equals(2));
+      },
+    );
   });
 }
