@@ -219,13 +219,37 @@ void main() {
       await tester.pump();
       expect(find.text('Errou!'), findsNothing);
       await tester.pump(const Duration(milliseconds: 150));
+      await tester.pump();
 
-      expect(find.text('FIM DE JOGO!'), findsOneWidget);
+      expect(find.text('FIM DE JOGO'), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('btn_play_again')));
       await tester.pump();
-      expect(find.text('FIM DE JOGO!'), findsNothing);
+      expect(find.text('FIM DE JOGO'), findsNothing);
       expect(vm.score, equals(0));
+
+      // Volta para mobile (390x844), avança 1 rodada e testa o botão de reiniciar a run
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final isChallengerHigherAfterReset =
+          vm.challengerMovie!.rating >= vm.currentMovie!.rating;
+      final winningKeyAfterReset = isChallengerHigherAfterReset
+          ? ValueKey('chal_${vm.challengerMovie!.id}')
+          : ValueKey('ref_${vm.currentMovie!.id}');
+
+      await tester.tap(find.byKey(winningKeyAfterReset));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 150));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(vm.score, equals(1));
+
+      await tester.tap(find.byKey(const Key('btn_restart_run')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(vm.score, equals(0));
+      expect(find.text('?.?'), findsNWidgets(2));
     });
   });
 }

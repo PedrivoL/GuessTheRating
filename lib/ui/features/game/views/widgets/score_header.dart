@@ -9,11 +9,13 @@ class ScoreHeader extends StatelessWidget {
     required this.score,
     required this.highScore,
     required this.isNewRecord,
+    required this.onRestart,
   });
 
   final int score;
   final int highScore;
   final bool isNewRecord;
+  final VoidCallback onRestart;
 
   @override
   Widget build(BuildContext context) {
@@ -25,12 +27,14 @@ class ScoreHeader extends StatelessWidget {
         spacing: 12,
         runSpacing: 8,
         children: [
-          const Row(
+          Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              LetterboxdDots(dotSize: 11),
-              SizedBox(width: 10),
-              Flexible(
+              _RestartRunButton(onPressed: onRestart),
+              const SizedBox(width: 10),
+              const LetterboxdDots(dotSize: 11),
+              const SizedBox(width: 10),
+              const Flexible(
                 child: Text(
                   'QUAL TEM A MAIOR NOTA?',
                   maxLines: 1,
@@ -62,13 +66,47 @@ class ScoreHeader extends StatelessWidget {
                 key: const Key('high_score_pill'),
                 icon: Icons.emoji_events_rounded,
                 iconColor: AppColors.trophyYellow,
-                label: isNewRecord ? 'Novo Recorde!' : 'Recorde',
+                label: isNewRecord ? 'Novo Recorde' : 'Recorde',
                 value: '$highScore',
                 highlighted: isNewRecord,
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RestartRunButton extends StatelessWidget {
+  const _RestartRunButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Reiniciar partida',
+      child: Material(
+        color: AppColors.surfaceElevated,
+        child: InkWell(
+          key: const Key('btn_restart_run'),
+          onTap: onPressed,
+          child: Container(
+            width: 30,
+            height: 30,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.zero,
+              border: Border.all(color: AppColors.border),
+            ),
+            child: const Icon(
+              Icons.refresh_rounded,
+              size: 17,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
       ),
     );
   }

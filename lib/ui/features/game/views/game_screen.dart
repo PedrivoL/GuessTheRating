@@ -122,6 +122,7 @@ class GameScreen extends StatelessWidget {
                     score: viewModel.score,
                     highScore: viewModel.highScore,
                     isNewRecord: viewModel.isNewRecord,
+                    onRestart: viewModel.restartGame,
                   ),
                 ),
                 Expanded(

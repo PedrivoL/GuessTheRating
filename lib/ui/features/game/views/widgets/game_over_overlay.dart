@@ -51,10 +51,10 @@ class GameOverOverlay extends StatelessWidget {
                   const LetterboxdDots(dotSize: 13),
                   const SizedBox(height: 14),
                   const Text(
-                    'FIM DE JOGO!',
+                    'FIM DE JOGO',
                     style: TextStyle(
                       color: AppColors.errorRed,
-                      fontSize: 26,
+                      fontSize: 24,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.1,
                     ),
@@ -68,16 +68,16 @@ class GameOverOverlay extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.letterboxdOrange.withValues(
+                        color: AppColors.trophyYellow.withValues(
                           alpha: 0.2,
                         ),
                         borderRadius: BorderRadius.zero,
-                        border: Border.all(color: AppColors.letterboxdOrange),
+                        border: Border.all(color: AppColors.trophyYellow),
                       ),
                       child: const Text(
                         '🏆 NOVO RECORDE PESSOAL!',
                         style: TextStyle(
-                          color: AppColors.letterboxdOrange,
+                          color: AppColors.trophyYellow,
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
                         ),
