@@ -96,6 +96,11 @@ class GameViewModel extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  bool get isCurrentRatingVisible =>
+      _score > 0 ||
+      _phase == GamePhase.revealing ||
+      _phase == GamePhase.gameOver;
+
   bool get isChallengerRatingVisible =>
       _phase == GamePhase.revealing || _phase == GamePhase.gameOver;
 

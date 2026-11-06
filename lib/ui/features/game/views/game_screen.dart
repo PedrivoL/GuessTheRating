@@ -135,7 +135,7 @@ class GameScreen extends StatelessWidget {
                         final referenceCard = MoviePosterCard(
                           key: ValueKey('ref_${current.id}'),
                           movie: current,
-                          showRating: true,
+                          showRating: viewModel.isCurrentRatingVisible,
                           isChallenger: false,
                           isInteractive: isInteractive,
                           isSelected: viewModel.selectedMovieId == current.id,

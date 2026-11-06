@@ -29,7 +29,7 @@ class MoviePosterCard extends StatelessWidget {
           ? AppColors.letterboxdGreen
           : AppColors.errorRed;
     }
-    if (isChallenger && isInteractive) {
+    if (!showRating && isInteractive) {
       return AppColors.letterboxdBlue.withValues(alpha: 0.65);
     }
     return AppColors.border;
@@ -400,7 +400,7 @@ class _RatingBadgeSection extends StatelessWidget {
                   ),
                   const SizedBox(width: 5),
                   Text(
-                    showRating ? movie.rating.toStringAsFixed(2) : '?.??',
+                    showRating ? movie.rating.toStringAsFixed(2) : '?.?',
                     style: const TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 20,

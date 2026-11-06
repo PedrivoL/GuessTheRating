@@ -174,6 +174,8 @@ void main() {
       expect(find.text('QUAL TEM A MAIOR NOTA?'), findsOneWidget);
       expect(find.text(vm.currentMovie!.title), findsWidgets);
       expect(find.text(vm.challengerMovie!.title), findsWidgets);
+      // Na 1ª rodada (score == 0), as notas dos dois filmes começam ocultas
+      expect(find.text('?.?'), findsNWidgets(2));
 
       final isChallengerHigher =
           vm.challengerMovie!.rating >= vm.currentMovie!.rating;
@@ -185,10 +187,22 @@ void main() {
       await tester.tap(find.byKey(winningKey));
       await tester.pump();
       expect(find.text('Acertou!'), findsNothing);
+      // Durante a revelação, as notas reais dos dois filmes aparecem na tela
+      expect(
+        find.text(vm.currentMovie!.rating.toStringAsFixed(2)),
+        findsOneWidget,
+      );
+      expect(
+        find.text(vm.challengerMovie!.rating.toStringAsFixed(2)),
+        findsOneWidget,
+      );
       await tester.pump(const Duration(milliseconds: 150));
+      await tester.pump(const Duration(milliseconds: 300));
 
       expect(vm.score, equals(1));
       expect(vm.phase, equals(GamePhase.playing));
+      // A partir da 2ª rodada, o filme que permaneceu mostra a nota e só o novo fica oculto
+      expect(find.text('?.?'), findsOneWidget);
 
       // Testa redimensionamento para layout Web/Desktop largo (1024x720)
       await tester.binding.setSurfaceSize(const Size(1024, 720));
