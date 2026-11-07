@@ -22,6 +22,22 @@ enum GamePhase {
   error,
 }
 
+/// Níveis de dificuldade baseados nos filmes mais logados do Letterboxd + catálogo Secret.
+enum GameDifficulty {
+  easy(label: 'Fácil', poolSize: 100),
+  medium(label: 'Médio', poolSize: 500),
+  hard(label: 'Difícil', poolSize: 1000),
+  secret(label: 'Secret', poolSize: 1000);
+
+  const GameDifficulty({
+    required this.label,
+    required this.poolSize,
+  });
+
+  final String label;
+  final int poolSize;
+}
+
 /// Gerencia o estado do jogo estilo "Higher or Lower" com notas do Letterboxd.
 class GameViewModel extends ChangeNotifier {
   GameViewModel({
@@ -85,6 +101,7 @@ class GameViewModel extends ChangeNotifier {
   final Duration gameOverDelay;
 
   List<Movie> _allMovies = const [];
+  List<Movie> _secretMovies = const [];
   WatchedProfile? _watchedProfile;
   UserAccount? _currentAccount;
   final List<Movie> _deck = [];
@@ -94,6 +111,9 @@ class GameViewModel extends ChangeNotifier {
 
   GamePhase _phase = GamePhase.loading;
   GamePhase get phase => _phase;
+
+  GameDifficulty _difficulty = GameDifficulty.easy;
+  GameDifficulty get difficulty => _difficulty;
 
   Movie? _currentMovie;
   Movie? get currentMovie => _currentMovie;
@@ -122,12 +142,15 @@ class GameViewModel extends ChangeNotifier {
   WatchedProfile? get watchedProfile => _watchedProfile;
   UserAccount? get currentAccount => _currentAccount;
 
-  /// Catálogo base somado a quaisquer filmes extras buscados do `watched.csv` do jogador.
+  /// Catálogo base somado ao catálogo Secret e quaisquer filmes extras buscados do `watched.csv`.
   List<Movie> get combinedCatalog {
     final custom = _watchedProfile?.customMovies ?? const <Movie>[];
     final accountCustom = _currentAccount?.customMovies ?? const <Movie>[];
-    if (custom.isEmpty && accountCustom.isEmpty) return _allMovies;
+    if (_secretMovies.isEmpty && custom.isEmpty && accountCustom.isEmpty) {
+      return _allMovies;
+    }
     final byId = <String, Movie>{
+      for (final m in _secretMovies) m.id: m,
       for (final m in _allMovies) m.id: m,
       for (final m in accountCustom) m.id: m,
       for (final m in custom) m.id: m,
@@ -147,7 +170,29 @@ class GameViewModel extends ChangeNotifier {
         return filtered;
       }
     }
-    return _allMovies;
+    if (_difficulty == GameDifficulty.secret && _secretMovies.length >= 2) {
+      return _secretMovies;
+    }
+    if (_allMovies.isEmpty) return const [];
+    final limit = min(_difficulty.poolSize, _allMovies.length);
+    return _allMovies.take(limit).toList(growable: false);
+  }
+
+  /// Altera a dificuldade (Fácil: 100, Médio: 500, Difícil: 1000) e reinicia a partida.
+  Future<void> setDifficulty(GameDifficulty newDifficulty) async {
+    final wasUsingWatched = isUsingWatchedPool;
+    if (_difficulty == newDifficulty && !wasUsingWatched) {
+      return;
+    }
+    _difficulty = newDifficulty;
+    final profile = _watchedProfile;
+    if (profile != null && profile.isActive) {
+      final deactivated = profile.copyWith(isActive: false);
+      _watchedProfile = deactivated;
+      await _watchedProfileRepository.saveProfile(deactivated);
+      if (_isDisposed) return;
+    }
+    _startNewRun();
   }
 
   bool get isUsingWatchedPool {
@@ -188,6 +233,7 @@ class GameViewModel extends ChangeNotifier {
         _scoreRepository.getHighScore(),
         _watchedProfileRepository.getProfile(),
         _accountRepository.getActiveAccount(),
+        _movieRepository.getSecretMovies(),
       ]);
       if (_isDisposed || generation != _runGeneration) return;
 
@@ -195,12 +241,14 @@ class GameViewModel extends ChangeNotifier {
       final savedHighScore = results[1]! as int;
       final savedProfile = results[2] as WatchedProfile?;
       final savedAccount = results[3] as UserAccount?;
+      final secretMovies = results[4]! as List<Movie>;
 
       if (movies.length < 2) {
         throw StateError('O catálogo precisa ter pelo menos 2 filmes.');
       }
 
       _allMovies = movies;
+      _secretMovies = secretMovies;
       _currentAccount = savedAccount;
       _highScore = (savedAccount != null && savedAccount.highScore > savedHighScore)
           ? savedAccount.highScore

@@ -7,6 +7,7 @@ class MovieRepository {
 
   final MovieCatalogService _catalogService;
   List<Movie>? _cachedMovies;
+  List<Movie>? _cachedSecretMovies;
 
   Future<List<Movie>> getMovies() async {
     final cached = _cachedMovies;
@@ -16,5 +17,15 @@ class MovieRepository {
     final loaded = await _catalogService.fetchMovies();
     _cachedMovies = List<Movie>.unmodifiable(loaded);
     return _cachedMovies!;
+  }
+
+  Future<List<Movie>> getSecretMovies() async {
+    final cached = _cachedSecretMovies;
+    if (cached != null && cached.isNotEmpty) {
+      return cached;
+    }
+    final loaded = await _catalogService.fetchSecretMovies();
+    _cachedSecretMovies = List<Movie>.unmodifiable(loaded);
+    return _cachedSecretMovies!;
   }
 }

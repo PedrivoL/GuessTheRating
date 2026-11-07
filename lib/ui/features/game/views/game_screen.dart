@@ -150,6 +150,8 @@ class GameScreen extends StatelessWidget {
                     score: viewModel.score,
                     highScore: viewModel.highScore,
                     isNewRecord: viewModel.isNewRecord,
+                    selectedDifficulty: viewModel.difficulty,
+                    onSelectDifficulty: viewModel.setDifficulty,
                     onRestart: viewModel.restartGame,
                     onOpenProfile: () => _openProfileDialog(context),
                     onOpenAccount: () => _openAccountDialog(context),

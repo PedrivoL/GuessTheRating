@@ -6,6 +6,7 @@ class Movie {
   final int year;
   final String director;
   final double rating;
+  final int ratingCount;
   final String posterUrl;
 
   const Movie({
@@ -15,10 +16,17 @@ class Movie {
     required this.year,
     required this.director,
     required this.rating,
+    this.ratingCount = 0,
     required this.posterUrl,
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) {
+    final rawRatingCount = json['ratingCount'];
+    final ratingCount = switch (rawRatingCount) {
+      final int v => v,
+      final num v => v.toInt(),
+      _ => 0,
+    };
     return switch (json) {
       {
         'id': final String id,
@@ -36,6 +44,7 @@ class Movie {
           year: year,
           director: director,
           rating: rating.toDouble(),
+          ratingCount: ratingCount,
           posterUrl: posterUrl,
         ),
       _ => throw const FormatException('Formato inválido para Movie.'),
@@ -50,6 +59,7 @@ class Movie {
       'year': year,
       'director': director,
       'rating': rating,
+      'ratingCount': ratingCount,
       'posterUrl': posterUrl,
     };
   }

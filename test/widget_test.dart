@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_first_app/data/repositories/account_repository.dart';
@@ -93,7 +94,7 @@ void main() {
       const service = AssetMovieCatalogService();
       final movies = (await tester.runAsync(service.fetchMovies))!;
 
-      expect(movies.length, greaterThanOrEqualTo(750));
+      expect(movies.length, equals(1000));
       final ids = movies.map((m) => m.id).toSet();
       final posters = movies.map((m) => m.posterUrl).toSet();
       final titleYears = movies
@@ -108,8 +109,12 @@ void main() {
       expect(titleYears.length, equals(movies.length));
       for (final movie in movies) {
         expect(movie.rating, inInclusiveRange(0.5, 5.0));
+        expect(movie.ratingCount, greaterThan(0));
         expect(movie.posterUrl, startsWith('https://'));
       }
+
+      final secretMovies = (await tester.runAsync(service.fetchSecretMovies))!;
+      expect(secretMovies.length, greaterThanOrEqualTo(700));
     });
   });
 
@@ -177,6 +182,46 @@ void main() {
 
       vm.dispose();
     });
+
+    test('filtra o catálogo em Fácil (100), Médio (500) e Difícil (1000)', () async {
+      final catalog1000 = List<Movie>.generate(
+        1000,
+        (i) => Movie(
+          id: 'boxd_$i',
+          title: 'Movie $i',
+          originalTitle: 'Movie $i',
+          year: 2000,
+          director: 'Director',
+          rating: 3.5,
+          ratingCount: 1000000 - i,
+          posterUrl: 'https://example.com/$i.jpg',
+        ),
+      );
+
+      final vm = GameViewModel(
+        movieRepository: MovieRepository(
+          catalogService: StaticMovieCatalogService(catalog1000),
+        ),
+        scoreRepository: ScoreRepository(
+          storageService: InMemoryScoreService(initialHighScore: 0),
+        ),
+        random: Random(3),
+      );
+
+      await vm.initialize();
+      expect(vm.difficulty, equals(GameDifficulty.easy));
+      expect(vm.activePoolCount, equals(100));
+
+      await vm.setDifficulty(GameDifficulty.medium);
+      expect(vm.difficulty, equals(GameDifficulty.medium));
+      expect(vm.activePoolCount, equals(500));
+
+      await vm.setDifficulty(GameDifficulty.hard);
+      expect(vm.difficulty, equals(GameDifficulty.hard));
+      expect(vm.activePoolCount, equals(1000));
+
+      vm.dispose();
+    });
   });
 
   group('GameScreen Widget Tests (Mobile & Web)', () {
@@ -202,6 +247,25 @@ void main() {
 
       await tester.pumpWidget(MyApp(viewModel: vm));
       expect(find.text('QUAL TEM A MAIOR NOTA?'), findsOneWidget);
+      expect(find.text('Fácil'), findsOneWidget);
+      expect(find.text('Médio'), findsOneWidget);
+      expect(find.text('Difícil'), findsOneWidget);
+      expect(find.text('Secret'), findsNothing);
+
+      // Hover do mouse por 1 segundo sobre o botão Difícil revela o botão Secret embaixo
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      addTearDown(mouse.removePointer);
+      await mouse.addPointer(location: Offset.zero);
+      await tester.pump();
+      await mouse.moveTo(tester.getCenter(find.byKey(const Key('btn_difficulty_hard'))));
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('Secret'), findsNothing);
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('Secret'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('btn_difficulty_secret')));
+      await tester.pump();
+      expect(vm.difficulty, equals(GameDifficulty.secret));
+
       expect(find.text(vm.currentMovie!.title), findsWidgets);
       expect(find.text(vm.challengerMovie!.title), findsWidgets);
       // Na 1ª rodada (score == 0), as notas dos dois filmes começam ocultas

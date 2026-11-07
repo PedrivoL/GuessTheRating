@@ -5,22 +5,30 @@ import 'package:my_first_app/domain/models/movie.dart';
 /// Contrato para carregamento do catálogo de filmes.
 abstract interface class MovieCatalogService {
   Future<List<Movie>> fetchMovies();
+  Future<List<Movie>> fetchSecretMovies();
 }
 
 /// Carrega o catálogo JSON embutido nos assets do app.
 class AssetMovieCatalogService implements MovieCatalogService {
   const AssetMovieCatalogService({
     this.assetPath = 'assets/data/movies.json',
+    this.secretAssetPath = 'assets/data/secret_movies.json',
     this._bundle,
   });
 
   final String assetPath;
+  final String secretAssetPath;
   final AssetBundle? _bundle;
 
   @override
-  Future<List<Movie>> fetchMovies() async {
+  Future<List<Movie>> fetchMovies() => _loadFrom(assetPath);
+
+  @override
+  Future<List<Movie>> fetchSecretMovies() => _loadFrom(secretAssetPath);
+
+  Future<List<Movie>> _loadFrom(String path) async {
     final bundle = _bundle ?? rootBundle;
-    final rawJson = await bundle.loadString(assetPath);
+    final rawJson = await bundle.loadString(path);
     final decoded = (jsonDecode(rawJson) as List<dynamic>)
         .cast<Map<String, dynamic>>();
     return decoded.map(Movie.fromJson).toList(growable: false);
@@ -29,12 +37,19 @@ class AssetMovieCatalogService implements MovieCatalogService {
 
 /// Serviço em memória usado para testes e para o Flutter Widget Preview.
 class StaticMovieCatalogService implements MovieCatalogService {
-  const StaticMovieCatalogService([this.movies = previewSampleMovies]);
+  const StaticMovieCatalogService([
+    this.movies = previewSampleMovies,
+    List<Movie>? secretMovies,
+  ]) : _secretMovies = secretMovies;
 
   final List<Movie> movies;
+  final List<Movie>? _secretMovies;
 
   @override
   Future<List<Movie>> fetchMovies() async => movies;
+
+  @override
+  Future<List<Movie>> fetchSecretMovies() async => _secretMovies ?? movies;
 
   static const List<Movie> previewSampleMovies = [
     Movie(

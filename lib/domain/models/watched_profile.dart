@@ -218,6 +218,7 @@ abstract final class WatchedCsvParser {
     String? ldTitle;
     String? director;
     double? rating;
+    int ratingCount = 0;
     String? posterUrl;
 
     final ldMatch = RegExp(
@@ -241,6 +242,12 @@ abstract final class WatchedCsvParser {
           rating = rv.toDouble();
         } else if (rv is String) {
           rating = double.tryParse(rv);
+        }
+        final rc = agg?['ratingCount'];
+        if (rc is num) {
+          ratingCount = rc.toInt();
+        } else if (rc is String) {
+          ratingCount = int.tryParse(rc.replaceAll(',', '').trim()) ?? 0;
         }
         final dirs = ld['director'];
         if (dirs is List && dirs.isNotEmpty) {
@@ -305,6 +312,7 @@ abstract final class WatchedCsvParser {
           ? 'Direção creditada'
           : _decodeHtmlEntities(director).trim(),
       rating: double.parse(rating.toStringAsFixed(2)),
+      ratingCount: ratingCount,
       posterUrl: posterUrl,
     );
   }

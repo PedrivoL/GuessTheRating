@@ -1,14 +1,18 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:my_first_app/ui/core/theme/app_theme.dart';
+import 'package:my_first_app/ui/features/game/view_models/game_view_model.dart';
 import 'package:my_first_app/ui/features/game/views/widgets/letterboxd_dots.dart';
 
-/// Barra superior com título do jogo, botões de Conta e Perfil do Letterboxd, placar atual e recorde.
+/// Barra superior com título do jogo, seletor de dificuldade, botões de Conta e Perfil do Letterboxd, placar atual e recorde.
 class ScoreHeader extends StatelessWidget {
   const ScoreHeader({
     super.key,
     required this.score,
     required this.highScore,
     required this.isNewRecord,
+    required this.selectedDifficulty,
+    required this.onSelectDifficulty,
     required this.onRestart,
     required this.onOpenProfile,
     required this.onOpenAccount,
@@ -19,6 +23,8 @@ class ScoreHeader extends StatelessWidget {
   final int score;
   final int highScore;
   final bool isNewRecord;
+  final GameDifficulty selectedDifficulty;
+  final ValueChanged<GameDifficulty> onSelectDifficulty;
   final VoidCallback onRestart;
   final VoidCallback onOpenProfile;
   final VoidCallback onOpenAccount;
@@ -27,6 +33,9 @@ class ScoreHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isUsingCustomPool =
+        activeUsername != null && activeUsername!.isNotEmpty;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Wrap(
@@ -35,25 +44,37 @@ class ScoreHeader extends StatelessWidget {
         spacing: 12,
         runSpacing: 8,
         children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
+          Wrap(
+            spacing: 10,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              _RestartRunButton(onPressed: onRestart),
-              const SizedBox(width: 10),
-              const LetterboxdDots(dotSize: 11),
-              const SizedBox(width: 10),
-              const Flexible(
-                child: Text(
-                  'QUAL TEM A MAIOR NOTA?',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                    letterSpacing: 0.8,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _RestartRunButton(onPressed: onRestart),
+                  const SizedBox(width: 10),
+                  const LetterboxdDots(dotSize: 11),
+                  const SizedBox(width: 10),
+                  const Flexible(
+                    child: Text(
+                      'QUAL TEM A MAIOR NOTA?',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
                   ),
-                ),
+                ],
+              ),
+              _DifficultySelector(
+                selectedDifficulty: selectedDifficulty,
+                isCustomPoolActive: isUsingCustomPool,
+                onSelectDifficulty: onSelectDifficulty,
               ),
             ],
           ),
@@ -90,6 +111,127 @@ class ScoreHeader extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _DifficultySelector extends StatefulWidget {
+  const _DifficultySelector({
+    required this.selectedDifficulty,
+    required this.isCustomPoolActive,
+    required this.onSelectDifficulty,
+  });
+
+  final GameDifficulty selectedDifficulty;
+  final bool isCustomPoolActive;
+  final ValueChanged<GameDifficulty> onSelectDifficulty;
+
+  @override
+  State<_DifficultySelector> createState() => _DifficultySelectorState();
+}
+
+class _DifficultySelectorState extends State<_DifficultySelector> {
+  static const Color _secretPurple = Color(0xFFC06BFF);
+
+  Timer? _hoverTimer;
+  bool _isSecretRevealed = false;
+
+  @override
+  void dispose() {
+    _hoverTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onHardHoverEnter() {
+    _hoverTimer?.cancel();
+    if (_isSecretRevealed) return;
+    _hoverTimer = Timer(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _isSecretRevealed = true;
+        });
+      }
+    });
+  }
+
+  void _onHardHoverExit() {
+    _hoverTimer?.cancel();
+  }
+
+  Color _accentFor(GameDifficulty difficulty) {
+    return switch (difficulty) {
+      GameDifficulty.easy => AppColors.letterboxdGreen,
+      GameDifficulty.medium => AppColors.letterboxdBlue,
+      GameDifficulty.hard => AppColors.letterboxdOrange,
+      GameDifficulty.secret => _secretPurple,
+    };
+  }
+
+  Key _keyFor(GameDifficulty difficulty) {
+    return switch (difficulty) {
+      GameDifficulty.easy => const Key('btn_difficulty_easy'),
+      GameDifficulty.medium => const Key('btn_difficulty_medium'),
+      GameDifficulty.hard => const Key('btn_difficulty_hard'),
+      GameDifficulty.secret => const Key('btn_difficulty_secret'),
+    };
+  }
+
+  Widget _buildDifficultyChip(GameDifficulty diff) {
+    final isSelected =
+        !widget.isCustomPoolActive && widget.selectedDifficulty == diff;
+    final accent = _accentFor(diff);
+    return Material(
+      color: isSelected
+          ? accent.withValues(alpha: 0.18)
+          : AppColors.surfaceElevated,
+      child: InkWell(
+        key: _keyFor(diff),
+        onTap: () => widget.onSelectDifficulty(diff),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 6,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.zero,
+            border: Border.all(
+              color: isSelected ? accent : AppColors.border,
+            ),
+          ),
+          child: Text(
+            diff.label,
+            style: TextStyle(
+              color: isSelected ? accent : AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final showSecret =
+        _isSecretRevealed ||
+        (!widget.isCustomPoolActive &&
+            widget.selectedDifficulty == GameDifficulty.secret);
+
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        _buildDifficultyChip(GameDifficulty.easy),
+        _buildDifficultyChip(GameDifficulty.medium),
+        MouseRegion(
+          onEnter: (_) => _onHardHoverEnter(),
+          onExit: (_) => _onHardHoverExit(),
+          child: _buildDifficultyChip(GameDifficulty.hard),
+        ),
+        if (showSecret) _buildDifficultyChip(GameDifficulty.secret),
+      ],
     );
   }
 }
