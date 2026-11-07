@@ -139,30 +139,29 @@ class GameScreen extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1120),
-            child: Column(
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: ScoreHeader(
-                    score: viewModel.score,
-                    highScore: viewModel.highScore,
-                    isNewRecord: viewModel.isNewRecord,
-                    selectedDifficulty: viewModel.difficulty,
-                    onSelectDifficulty: viewModel.setDifficulty,
-                    onRestart: viewModel.restartGame,
-                    onOpenProfile: () => _openProfileDialog(context),
-                    onOpenAccount: () => _openAccountDialog(context),
-                    activeUsername: viewModel.isUsingWatchedPool
-                        ? viewModel.watchedProfile?.username
-                        : null,
-                    loggedInAccountUsername:
-                        viewModel.currentAccount?.username,
-                  ),
-                ),
-                Expanded(
+        Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: ScoreHeader(
+                score: viewModel.score,
+                highScore: viewModel.highScore,
+                isNewRecord: viewModel.isNewRecord,
+                selectedDifficulty: viewModel.difficulty,
+                onSelectDifficulty: viewModel.setDifficulty,
+                onRestart: viewModel.restartGame,
+                onOpenProfile: () => _openProfileDialog(context),
+                onOpenAccount: () => _openAccountDialog(context),
+                activeUsername: viewModel.isUsingWatchedPool
+                    ? viewModel.watchedProfile?.username
+                    : null,
+                loggedInAccountUsername: viewModel.currentAccount?.username,
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1120),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                     child: LayoutBuilder(
@@ -222,9 +221,9 @@ class GameScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
         if (viewModel.phase == GamePhase.gameOver)
           Positioned.fill(

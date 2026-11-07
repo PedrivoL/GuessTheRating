@@ -399,7 +399,6 @@ Date,Name,Year,Letterboxd URI
         expect(vm.isUsingWatchedPool, isTrue);
         expect(vm.activePoolCount, equals(3));
         expect(find.text('Catálogo'), findsOneWidget);
-        expect(find.text('@pedrivol'), findsOneWidget);
 
         // Abre o modal de Catálogo e confere o bloco Buscar username + link pronto para copiar
         await tester.tap(find.byKey(const Key('btn_letterboxd_profile')));
@@ -505,7 +504,7 @@ Date,Name,Year,Letterboxd URI
 
         expect(vm.currentAccount?.username, equals('pedrivol'));
         expect(find.text('Conta: @pedrivol'), findsOneWidget);
-        expect(find.text('@pedrivol'), findsOneWidget);
+        expect(find.text('Catálogo'), findsOneWidget);
         expect(vm.activePoolCount, equals(2));
 
         // Faz logout e limpa o perfil local
@@ -578,7 +577,7 @@ Date,Name,Year,Letterboxd URI
         expect(vm.isUsingWatchedPool, isTrue);
         expect(vm.watchedProfile?.username, equals('nickalvo'));
         expect(vm.activePoolCount, equals(2));
-        expect(find.text('@nickalvo'), findsOneWidget);
+        expect(find.text('Catálogo'), findsOneWidget);
 
         // Abre o modal Catálogo e alterna para o Catálogo Geral
         await tester.tap(find.byKey(const Key('btn_letterboxd_profile')));

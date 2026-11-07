@@ -362,7 +362,7 @@ class _ProfilePoolButton extends StatelessWidget {
                   isActive
                       ? Icons.person_rounded
                       : Icons.person_outline_rounded,
-                  size: 16,
+                  size: 15,
                   color: isActive
                       ? AppColors.letterboxdGreen
                       : AppColors.textSecondary,
@@ -376,30 +376,6 @@ class _ProfilePoolButton extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                if (isActive) ...[
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 5,
-                      vertical: 1,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.letterboxdGreen.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.zero,
-                      border: Border.all(
-                        color: AppColors.letterboxdGreen.withValues(alpha: 0.6),
-                      ),
-                    ),
-                    child: Text(
-                      '@$activeUsername',
-                      style: const TextStyle(
-                        color: AppColors.letterboxdGreen,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -429,7 +405,7 @@ class _ScorePill extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: highlighted
             ? AppColors.trophyYellow.withValues(alpha: 0.18)
@@ -442,13 +418,13 @@ class _ScorePill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 17, color: iconColor),
-          const SizedBox(width: 6),
+          Icon(icon, size: 15, color: iconColor),
+          const SizedBox(width: 5),
           Text(
             '$label: ',
             style: const TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 12,
+              fontSize: 11.5,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -456,7 +432,7 @@ class _ScorePill extends StatelessWidget {
             value,
             style: const TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 14,
+              fontSize: 12.5,
               fontWeight: FontWeight.w800,
             ),
           ),
