@@ -387,46 +387,44 @@ Date,Name,Year,Letterboxd URI
 2024-01-15,Sound of Metal,2019,https://boxd.it/i7Q4
 ''';
 
+        await vm.importWatchedCsv(username: 'pedrivol', csvContent: csvSample);
+
         await tester.pumpWidget(
           MaterialApp(
             theme: AppTheme.darkTheme,
-            home: GameScreen(
-              viewModel: vm,
-              csvFilePicker: () async => const PickedCsvFile(
-                name: 'watched.csv',
-                content: csvSample,
-              ),
-            ),
+            home: GameScreen(viewModel: vm),
           ),
         );
 
-        expect(find.text('Seu @nick'), findsOneWidget);
+        expect(vm.isUsingWatchedPool, isTrue);
+        expect(vm.activePoolCount, equals(3));
+        expect(find.text('Catálogo'), findsOneWidget);
+        expect(find.text('@pedrivol'), findsOneWidget);
 
-        // Abre o modal de perfil do Letterboxd
+        // Abre o modal de Catálogo e confere o bloco Buscar username + link pronto para copiar
         await tester.tap(find.byKey(const Key('btn_letterboxd_profile')));
         await tester.pumpAndSettle();
 
-        expect(find.text('FILMES DO JOGADOR'), findsOneWidget);
-
-        await tester.enterText(
-          find.byKey(const Key('input_letterboxd_nick')),
-          'pedrivol',
-        );
-        await tester.tap(find.byKey(const Key('btn_pick_watched_csv')));
-        await tester.pumpAndSettle();
-
-        expect(find.text('Selecionado: watched.csv'), findsOneWidget);
+        expect(find.text('CATÁLOGO'), findsOneWidget);
+        expect(find.text('Buscar username'), findsOneWidget);
         expect(
-          find.text('✓ 3 filmes carregados do seu watched.csv'),
+          find.text('guesstherating.web.app/pedrivol'),
           findsOneWidget,
         );
 
-        await tester.tap(find.byKey(const Key('btn_apply_profile')));
-        await tester.pumpAndSettle();
+        // Digita outro username e vê o endereço atualizar na hora no bloco
+        await tester.enterText(
+          find.byKey(const Key('input_letterboxd_nick')),
+          'nickalvo',
+        );
+        await tester.pump();
+        expect(
+          find.text('guesstherating.web.app/nickalvo'),
+          findsOneWidget,
+        );
 
-        expect(vm.isUsingWatchedPool, isTrue);
-        expect(vm.activePoolCount, equals(3));
-        expect(find.text('@pedrivol'), findsOneWidget);
+        await tester.tap(find.byKey(const Key('btn_close_profile_dialog')));
+        await tester.pumpAndSettle();
 
         // O perfil fica salvo no storage incluindo o filme pesquisado fora do catálogo
         final saved = await profileStorage.loadProfile();
@@ -536,6 +534,69 @@ Date,Name,Year,Letterboxd URI
         await tester.pumpAndSettle();
 
         expect(vm.currentAccount?.username, equals('pedrivol'));
+        expect(vm.isUsingWatchedPool, isTrue);
+        expect(vm.activePoolCount, equals(2));
+      },
+    );
+
+    testWidgets(
+      'carrega catálogo automaticamente via URL guesstherating.web.app/nickalvo e alterna no modal Catálogo',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final accountService = InMemoryAccountService(
+          initialAccounts: {
+            'nickalvo': UserAccount(
+              username: 'nickalvo',
+              passwordHash: UserAccount.hashPassword('nickalvo', '1234'),
+              watchedMovieIds: const ['m1', 'm2'],
+              totalCsvCount: 2,
+              customMovies: const [],
+              highScore: 8,
+            ),
+          },
+        );
+
+        final vm = GameViewModel(
+          movieRepository: MovieRepository(
+            catalogService: const StaticMovieCatalogService(sampleMovies),
+          ),
+          scoreRepository: ScoreRepository(
+            storageService: InMemoryScoreService(initialHighScore: 0),
+          ),
+          accountRepository: AccountRepository(accountService: accountService),
+          initialUri: Uri.parse('https://guesstherating.web.app/nickalvo'),
+          random: Random(15),
+        );
+        await vm.initialize();
+        addTearDown(vm.dispose);
+
+        await tester.pumpWidget(MyApp(viewModel: vm));
+        await tester.pumpAndSettle();
+
+        expect(vm.isUsingWatchedPool, isTrue);
+        expect(vm.watchedProfile?.username, equals('nickalvo'));
+        expect(vm.activePoolCount, equals(2));
+        expect(find.text('@nickalvo'), findsOneWidget);
+
+        // Abre o modal Catálogo e alterna para o Catálogo Geral
+        await tester.tap(find.byKey(const Key('btn_letterboxd_profile')));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const Key('btn_mode_general')));
+        await tester.pumpAndSettle();
+
+        expect(vm.isUsingWatchedPool, isFalse);
+        expect(vm.activePoolCount, equals(3));
+
+        // Abre novamente o modal Catálogo e volta para o catálogo salvo (Meu Catálogo)
+        await tester.tap(find.byKey(const Key('btn_letterboxd_profile')));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const Key('btn_mode_watched')));
+        await tester.pumpAndSettle();
+
         expect(vm.isUsingWatchedPool, isTrue);
         expect(vm.activePoolCount, equals(2));
       },

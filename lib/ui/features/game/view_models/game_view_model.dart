@@ -49,6 +49,7 @@ class GameViewModel extends ChangeNotifier {
     Random? random,
     this.revealDelay = const Duration(milliseconds: 1200),
     this.gameOverDelay = const Duration(milliseconds: 900),
+    this.initialUri,
   }) : _watchedProfileRepository =
            watchedProfileRepository ??
            WatchedProfileRepository(
@@ -99,6 +100,56 @@ class GameViewModel extends ChangeNotifier {
   final Random _random;
   final Duration revealDelay;
   final Duration gameOverDelay;
+  final Uri? initialUri;
+
+  /// Extrai um `@nick` alvo caso o jogador tenha aberto um link direto como
+  /// `https://guesstherating.web.app/nickalvo` ou `/?nick=nickalvo`.
+  static String? extractTargetNickFromUri(Uri uri) {
+    if (uri.scheme != 'http' && uri.scheme != 'https') {
+      return null;
+    }
+
+    final queryNick = uri.queryParameters['nick'] ?? uri.queryParameters['u'];
+    if (queryNick != null && queryNick.trim().isNotEmpty) {
+      final norm = UserAccount.normalizeUsername(queryNick);
+      if (norm.isNotEmpty) return norm;
+    }
+
+    const reservedSegments = <String>{
+      'index.html',
+      'assets',
+      'icons',
+      'canvaskit',
+      'favicon.ico',
+      'manifest.json',
+      'flutter_service_worker.js',
+    };
+
+    final cleanSegments = uri.pathSegments
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList(growable: false);
+    if (cleanSegments.length == 1) {
+      final segment = cleanSegments.first;
+      if (!reservedSegments.contains(segment.toLowerCase()) &&
+          !segment.contains('.')) {
+        final norm = UserAccount.normalizeUsername(segment);
+        if (norm.isNotEmpty) return norm;
+      }
+    }
+
+    if (uri.fragment.isNotEmpty) {
+      final fragPath = uri.fragment.replaceFirst(RegExp(r'^/+'), '').trim();
+      if (fragPath.isNotEmpty &&
+          !fragPath.contains('/') &&
+          !fragPath.contains('.')) {
+        final norm = UserAccount.normalizeUsername(fragPath);
+        if (norm.isNotEmpty) return norm;
+      }
+    }
+
+    return null;
+  }
 
   List<Movie> _allMovies = const [];
   List<Movie> _secretMovies = const [];
@@ -254,6 +305,32 @@ class GameViewModel extends ChangeNotifier {
           ? savedAccount.highScore
           : savedHighScore;
       _watchedProfile = savedProfile ?? savedAccount?.toWatchedProfile();
+
+      final targetNick = extractTargetNickFromUri(initialUri ?? Uri.base);
+      if (targetNick != null && targetNick.isNotEmpty) {
+        try {
+          final targetAccount = await _accountRepository.findAccountByUsername(
+            targetNick,
+          );
+          if (_isDisposed || generation != _runGeneration) return;
+          if (targetAccount != null) {
+            final targetProfile = targetAccount.toWatchedProfile(isActive: true);
+            await _watchedProfileRepository.saveProfile(targetProfile);
+            if (_isDisposed || generation != _runGeneration) return;
+            _watchedProfile = targetProfile;
+          } else if (_watchedProfile != null &&
+              UserAccount.normalizeUsername(_watchedProfile!.username) ==
+                  targetNick) {
+            final activated = _watchedProfile!.copyWith(isActive: true);
+            await _watchedProfileRepository.saveProfile(activated);
+            if (_isDisposed || generation != _runGeneration) return;
+            _watchedProfile = activated;
+          }
+        } catch (_) {
+          // Ignora silenciosamente caso o nick da URL não seja encontrado
+        }
+      }
+
       _startNewRun();
     } catch (e) {
       if (_isDisposed || generation != _runGeneration) return;
@@ -411,12 +488,12 @@ class GameViewModel extends ChangeNotifier {
     _safeNotifyListeners();
   }
 
-  /// Carrega a pool de filmes apenas pelo `@nick` (caso o perfil já tenha sido cadastrado em uma conta),
+  /// Carrega a pool de filmes apenas pelo `username` (caso o perfil já tenha sido cadastrado em uma conta),
   /// sem exigir senha nem reenvio do `watched.csv`.
   Future<void> loadPoolByNick(String username) async {
     final norm = UserAccount.normalizeUsername(username);
     if (norm.isEmpty) {
-      throw const FormatException('Digite um @nick do Letterboxd.');
+      throw const FormatException('Digite um username do Letterboxd.');
     }
 
     final account = await _accountRepository.findAccountByUsername(norm);
@@ -437,7 +514,7 @@ class GameViewModel extends ChangeNotifier {
     }
 
     throw FormatException(
-      'O nick @$norm ainda não possui watched.csv salvo. Crie sua Conta ao lado ou selecione o arquivo watched.csv uma vez.',
+      'O username @$norm ainda não possui catálogo salvo. Crie sua Conta ao lado importando o arquivo watched.csv.',
     );
   }
 
@@ -514,6 +591,20 @@ class GameViewModel extends ChangeNotifier {
 
     _watchedProfile = updated;
     _startNewRun();
+  }
+
+  /// Ativa o catálogo próprio do jogador (da conta conectada ou perfil salvo).
+  Future<void> activateOwnCatalog() async {
+    final account = _currentAccount;
+    if (account != null) {
+      final profile = account.toWatchedProfile(isActive: true);
+      await _watchedProfileRepository.saveProfile(profile);
+      if (_isDisposed) return;
+      _watchedProfile = profile;
+      _startNewRun();
+      return;
+    }
+    await setWatchedPoolActive(true);
   }
 
   /// Atualiza o nick salvo sem precisar reimportar o arquivo `watched.csv`.

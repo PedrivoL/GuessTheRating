@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:my_first_app/domain/models/watched_profile.dart';
+import 'package:flutter/services.dart';
+import 'package:my_first_app/domain/models/user_account.dart';
 import 'package:my_first_app/ui/core/theme/app_theme.dart';
 import 'package:my_first_app/ui/core/utils/csv_file_picker.dart';
 import 'package:my_first_app/ui/features/game/view_models/game_view_model.dart';
 import 'package:my_first_app/ui/features/game/views/widgets/letterboxd_dots.dart';
 
-/// Modal para o jogador inserir seu nick do Letterboxd e importar seu `watched.csv` uma única vez,
-/// carregando imediatamente quaisquer filmes que não estejam no `movies.json` local.
+/// Modal de Catálogo: permite alternar entre o Catálogo Geral e o Meu Catálogo,
+/// buscar o catálogo de qualquer `username` e copiar o link direto da página
+/// `guesstherating.web.app/username`.
 class LetterboxdProfileDialog extends StatefulWidget {
   const LetterboxdProfileDialog({
     super.key,
@@ -23,85 +25,52 @@ class LetterboxdProfileDialog extends StatefulWidget {
 }
 
 class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
-  late final TextEditingController _nickController;
-  String? _pickedFileName;
-  WatchedCsvMatchResult? _resolvedCsvResult;
+  late final TextEditingController _usernameController;
   String? _errorMessage;
   bool _isBusy = false;
-  int _lookupCompleted = 0;
-  int _lookupTotal = 0;
+  bool _copiedLink = false;
 
   @override
   void initState() {
     super.initState();
-    _nickController = TextEditingController(
-      text: widget.viewModel.watchedProfile?.username ?? '',
+    _usernameController = TextEditingController(
+      text: widget.viewModel.watchedProfile?.username ??
+          widget.viewModel.currentAccount?.username ??
+          '',
     );
   }
 
   @override
   void dispose() {
-    _nickController.dispose();
+    _usernameController.dispose();
     super.dispose();
   }
 
-  Future<void> _handlePickCsv() async {
-    setState(() {
-      _errorMessage = null;
-    });
-
-    try {
-      final picked = await widget.csvFilePicker();
-      if (!mounted || picked == null) return;
-
-      setState(() {
-        _pickedFileName = picked.name;
-        _resolvedCsvResult = null;
-        _isBusy = true;
-        _lookupCompleted = 0;
-        _lookupTotal = 0;
-      });
-
-      final resolved = await widget.viewModel.resolveWatchedCsv(
-        picked.content,
-        onLookupProgress: (completed, total) {
-          if (!mounted) return;
-          setState(() {
-            _lookupCompleted = completed;
-            _lookupTotal = total;
-          });
-        },
-      );
-
-      if (!mounted) return;
-      setState(() {
-        _resolvedCsvResult = resolved;
-        _isBusy = false;
-      });
-    } on FormatException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = e.message;
-        _isBusy = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = 'Não foi possível ler o arquivo selecionado: $e';
-        _isBusy = false;
-      });
-    }
+  String _resolveShareUsername() {
+    final typed = UserAccount.normalizeUsername(_usernameController.text);
+    if (typed.isNotEmpty) return typed;
+    final fromProfile = widget.viewModel.watchedProfile?.username;
+    if (fromProfile != null && fromProfile.isNotEmpty) return fromProfile;
+    final fromAccount = widget.viewModel.currentAccount?.username;
+    if (fromAccount != null && fromAccount.isNotEmpty) return fromAccount;
+    return 'username';
   }
 
-  Future<void> _handleSaveAndPlay() async {
-    final nick = _nickController.text.trim();
-    final resolved = _resolvedCsvResult;
-    final existingProfile = widget.viewModel.watchedProfile;
+  Future<void> _handleCopyShareLink() async {
+    final targetUsername = _resolveShareUsername();
+    final url = 'https://guesstherating.web.app/$targetUsername';
+    await Clipboard.setData(ClipboardData(text: url));
+    if (!mounted) return;
+    setState(() {
+      _copiedLink = true;
+    });
+  }
 
-    if (resolved == null && existingProfile == null && nick.isEmpty) {
+  Future<void> _handleLoadUsernameCatalog() async {
+    final username = _usernameController.text.trim();
+    if (username.isEmpty) {
       setState(() {
-        _errorMessage =
-            'Digite um @nick já cadastrado ou selecione o arquivo watched.csv.';
+        _errorMessage = 'Digite o username de quem você quer usar o catálogo.';
       });
       return;
     }
@@ -112,18 +81,7 @@ class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
     });
 
     try {
-      if (resolved != null) {
-        await widget.viewModel.applyResolvedWatchedCsv(
-          username: nick.isEmpty
-              ? (existingProfile?.username ?? 'voce')
-              : nick,
-          resolvedResult: resolved,
-        );
-      } else if (nick.isNotEmpty) {
-        await widget.viewModel.loadPoolByNick(nick);
-      } else if (existingProfile != null) {
-        await widget.viewModel.setWatchedPoolActive(true);
-      }
+      await widget.viewModel.loadPoolByNick(username);
       if (!mounted) return;
       Navigator.of(context).pop();
     } on FormatException catch (e) {
@@ -135,14 +93,29 @@ class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Erro ao salvar perfil: $e';
+        _errorMessage = 'Erro ao carregar catálogo: $e';
         _isBusy = false;
       });
     }
   }
 
-  Future<void> _handleSwitchMode(bool useWatchedPool) async {
-    await widget.viewModel.setWatchedPoolActive(useWatchedPool);
+  Future<void> _handleSelectGeneralCatalog() async {
+    await widget.viewModel.setWatchedPoolActive(false);
+    if (!mounted) return;
+    Navigator.of(context).pop();
+  }
+
+  Future<void> _handleSelectOwnCatalog() async {
+    final hasOwn = widget.viewModel.currentAccount != null ||
+        widget.viewModel.watchedProfile != null;
+    if (!hasOwn) {
+      setState(() {
+        _errorMessage =
+            'Nenhum catálogo próprio salvo ainda. Busque um username abaixo ou cadastre seu watched.csv no botão Conta.';
+      });
+      return;
+    }
+    await widget.viewModel.activateOwnCatalog();
     if (!mounted) return;
     Navigator.of(context).pop();
   }
@@ -151,25 +124,33 @@ class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
     await widget.viewModel.clearWatchedProfile();
     if (!mounted) return;
     setState(() {
-      _pickedFileName = null;
-      _resolvedCsvResult = null;
-      _nickController.clear();
+      _usernameController.clear();
       _errorMessage = null;
+      _copiedLink = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final existingProfile = widget.viewModel.watchedProfile;
+    final currentAccount = widget.viewModel.currentAccount;
     final isUsingWatched = widget.viewModel.isUsingWatchedPool;
-    final resolved = _resolvedCsvResult;
+
+    final ownUsername = currentAccount?.username ?? existingProfile?.username;
+    final ownCount = currentAccount?.watchedMovieIds.length ??
+        existingProfile?.watchedMovieIds.length;
+    final isOwnCatalogActive = isUsingWatched &&
+        existingProfile != null &&
+        (currentAccount == null ||
+            existingProfile.username == currentAccount.username);
+    final shareUsername = _resolveShareUsername();
 
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 460),
+        constraints: const BoxConstraints(maxWidth: 470),
         child: Container(
           padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
@@ -195,7 +176,7 @@ class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
                     const SizedBox(width: 10),
                     const Expanded(
                       child: Text(
-                        'FILMES DO JOGADOR',
+                        'CATÁLOGO',
                         style: TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 16,
@@ -230,9 +211,52 @@ class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
                   ],
                 ),
                 const SizedBox(height: 16),
+                const Text(
+                  'ESCOLHER CATÁLOGO ATIVO',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.7,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ModeChoiceButton(
+                        buttonKey: const Key('btn_mode_general'),
+                        icon: Icons.public_rounded,
+                        label: 'Catálogo Geral',
+                        subtitle: 'Filmes do Letterboxd',
+                        selected: !isUsingWatched,
+                        accentColor: AppColors.letterboxdBlue,
+                        onTap: _isBusy ? null : _handleSelectGeneralCatalog,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _ModeChoiceButton(
+                        buttonKey: const Key('btn_mode_watched'),
+                        icon: Icons.person_rounded,
+                        label: 'Meu Catálogo',
+                        subtitle: ownUsername != null
+                            ? '@$ownUsername (${ownCount ?? 0} filmes)'
+                            : 'Não conectado',
+                        selected: isOwnCatalogActive,
+                        accentColor: AppColors.letterboxdGreen,
+                        onTap: _isBusy ? null : _handleSelectOwnCatalog,
+                      ),
+                    ),
+                  ],
+                ),
                 if (existingProfile != null) ...[
+                  const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 9,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceElevated,
                       borderRadius: BorderRadius.zero,
@@ -242,242 +266,256 @@ class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
                             : AppColors.border,
                       ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.verified_user_rounded,
-                              size: 16,
+                        Icon(
+                          isUsingWatched
+                              ? Icons.check_circle_rounded
+                              : Icons.folder_special_rounded,
+                          size: 16,
+                          color: isUsingWatched
+                              ? AppColors.letterboxdGreen
+                              : AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 7),
+                        Expanded(
+                          child: Text(
+                            isUsingWatched
+                                ? 'Jogando com: @${existingProfile.username} (${existingProfile.watchedMovieIds.length} filmes)'
+                                : 'Salvo: @${existingProfile.username} (${existingProfile.watchedMovieIds.length} filmes)',
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          key: const Key('btn_clear_profile'),
+                          onPressed: _isBusy ? null : _handleClearProfile,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.errorRed,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.zero,
+                            ),
+                          ),
+                          child: const Text(
+                            'Remover',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.zero,
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.search_rounded,
+                            size: 16,
+                            color: AppColors.letterboxdGreen,
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'Buscar username',
+                            key: Key('tab_explore_nick'),
+                            style: TextStyle(
                               color: AppColors.letterboxdGreen,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'USERNAME DO JOGADOR',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.7,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        key: const Key('input_letterboxd_nick'),
+                        controller: _usernameController,
+                        enabled: !_isBusy,
+                        onChanged: (_) {
+                          setState(() {
+                            _copiedLink = false;
+                          });
+                        },
+                        onSubmitted: (_) {
+                          if (!_isBusy) _handleLoadUsernameCatalog();
+                        },
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        decoration: const InputDecoration(
+                          hintText: 'Ex: pedrivol',
+                          hintStyle: TextStyle(color: AppColors.textSecondary),
+                          prefixText: '@',
+                          prefixStyle: TextStyle(
+                            color: AppColors.letterboxdGreen,
+                            fontWeight: FontWeight.w800,
+                          ),
+                          filled: true,
+                          fillColor: AppColors.surface,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 11,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.zero,
+                            borderSide: BorderSide(color: AppColors.border),
+                          ),
+                          disabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.zero,
+                            borderSide: BorderSide(color: AppColors.border),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.zero,
+                            borderSide: BorderSide(
+                              color: AppColors.letterboxdGreen,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'ENDEREÇO DA PÁGINA DO CATÁLOGO',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 9,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.background,
+                                borderRadius: BorderRadius.zero,
+                                border: Border.all(color: AppColors.border),
+                              ),
                               child: Text(
-                                'Perfil salvo: @${existingProfile.username}',
+                                'guesstherating.web.app/$shareUsername',
+                                key: const Key('text_share_catalog_url'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                            TextButton(
-                              key: const Key('btn_clear_profile'),
-                              onPressed: _isBusy ? null : _handleClearProfile,
-                              style: TextButton.styleFrom(
-                                foregroundColor: AppColors.errorRed,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                shape: const RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.zero,
-                                ),
-                              ),
-                              child: const Text(
-                                'Remover',
-                                style: TextStyle(
+                                  color: AppColors.letterboxdGreen,
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${existingProfile.watchedMovieIds.length} filmes disponíveis na sua pool (${existingProfile.totalCsvCount} no watched.csv).',
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _ModeChoiceButton(
-                                buttonKey: const Key('btn_mode_watched'),
-                                label: 'Meus Filmes',
-                                selected: isUsingWatched,
-                                onTap: () => _handleSwitchMode(true),
+                          const SizedBox(width: 8),
+                          Material(
+                            color: _copiedLink
+                                ? AppColors.letterboxdGreen
+                                : AppColors.surface,
+                            child: InkWell(
+                              key: const Key('btn_copy_catalog_link'),
+                              onTap: _handleCopyShareLink,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 9,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.zero,
+                                  border: Border.all(
+                                    color: AppColors.letterboxdGreen,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _copiedLink
+                                          ? Icons.check_rounded
+                                          : Icons.copy_rounded,
+                                      size: 14,
+                                      color: _copiedLink
+                                          ? Colors.black
+                                          : AppColors.letterboxdGreen,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      _copiedLink ? 'COPIADO!' : 'COPIAR LINK',
+                                      style: TextStyle(
+                                        color: _copiedLink
+                                            ? Colors.black
+                                            : AppColors.letterboxdGreen,
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _ModeChoiceButton(
-                                buttonKey: const Key('btn_mode_general'),
-                                label: 'Catálogo Geral',
-                                selected: !isUsingWatched,
-                                onTap: () => _handleSwitchMode(false),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                const Text(
-                  'SEU NICK NO LETTERBOXD',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.7,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                TextField(
-                  key: const Key('input_letterboxd_nick'),
-                  controller: _nickController,
-                  enabled: !_isBusy,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Ex: pedrivol',
-                    hintStyle: const TextStyle(color: AppColors.textSecondary),
-                    prefixText: '@',
-                    prefixStyle: const TextStyle(
-                      color: AppColors.letterboxdGreen,
-                      fontWeight: FontWeight.w800,
-                    ),
-                    filled: true,
-                    fillColor: AppColors.surfaceElevated,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 11,
-                    ),
-                    enabledBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    disabledBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
-                      borderSide: BorderSide(
-                        color: AppColors.letterboxdGreen,
-                        width: 1.5,
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                const Text(
-                  'ARQUIVO WATCHED.CSV (SÓ PRECISA IMPORTAR 1 VEZ)',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.7,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                OutlinedButton.icon(
-                  key: const Key('btn_pick_watched_csv'),
-                  onPressed: _isBusy ? null : _handlePickCsv,
-                  icon: Icon(
-                    _pickedFileName != null
-                        ? Icons.check_circle_rounded
-                        : Icons.upload_file_rounded,
-                    size: 18,
-                    color: _pickedFileName != null
-                        ? AppColors.letterboxdGreen
-                        : AppColors.letterboxdBlue,
-                  ),
-                  label: Text(
-                    _pickedFileName != null
-                        ? 'Selecionado: $_pickedFileName'
-                        : 'Selecionar arquivo watched.csv',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textPrimary,
-                    backgroundColor: AppColors.surfaceElevated,
-                    side: BorderSide(
-                      color: _pickedFileName != null
-                          ? AppColors.letterboxdGreen
-                          : AppColors.border,
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                  ),
-                ),
-                if (_isBusy && _lookupTotal > 0) ...[
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceElevated,
-                      borderRadius: BorderRadius.zero,
-                      border: Border.all(color: AppColors.letterboxdBlue),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Carregando filmes fora do catálogo ($_lookupCompleted/$_lookupTotal)...',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                      const SizedBox(height: 14),
+                      ElevatedButton(
+                        key: const Key('btn_apply_profile'),
+                        onPressed: _isBusy ? null : _handleLoadUsernameCatalog,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.letterboxdGreen,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.zero,
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        LinearProgressIndicator(
-                          value: _lookupCompleted / _lookupTotal,
-                          minHeight: 5,
-                          backgroundColor: AppColors.background,
-                          color: AppColors.letterboxdGreen,
+                        child: Text(
+                          _isBusy
+                              ? 'CARREGANDO CATÁLOGO...'
+                              : 'CARREGAR CATÁLOGO DO USERNAME',
                         ),
-                      ],
-                    ),
-                  ),
-                ] else if (resolved != null) ...[
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceElevated,
-                      borderRadius: BorderRadius.zero,
-                      border: Border.all(color: AppColors.letterboxdGreen),
-                    ),
-                    child: Text(
-                      '✓ ${resolved.matchedMovies.length} filmes carregados do seu watched.csv',
-                      style: const TextStyle(
-                        color: AppColors.letterboxdGreen,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
                       ),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 8),
-                const Text(
-                  'No Letterboxd, acesse Settings → Data → Export Your Data e selecione o arquivo watched.csv.',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 11.5,
-                    height: 1.35,
+                    ],
                   ),
                 ),
                 if (_errorMessage != null) ...[
@@ -499,33 +537,6 @@ class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 18),
-                ElevatedButton(
-                  key: const Key('btn_apply_profile'),
-                  onPressed: _isBusy ? null : _handleSaveAndPlay,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.letterboxdGreen,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 13),
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  child: Text(
-                    _isBusy
-                        ? 'CARREGANDO FILMES...'
-                        : (resolved != null
-                              ? 'SALVAR E JOGAR COM MEUS FILMES'
-                              : (existingProfile != null
-                                    ? 'ATUALIZAR NICK E USAR MEUS FILMES'
-                                    : 'SALVAR E JOGAR')),
-                  ),
-                ),
               ],
             ),
           ),
@@ -538,43 +549,77 @@ class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
 class _ModeChoiceButton extends StatelessWidget {
   const _ModeChoiceButton({
     required this.buttonKey,
+    required this.icon,
     required this.label,
+    required this.subtitle,
     required this.selected,
+    required this.accentColor,
     required this.onTap,
   });
 
   final Key buttonKey;
+  final IconData icon;
   final String label;
+  final String subtitle;
   final bool selected;
-  final VoidCallback onTap;
+  final Color accentColor;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: selected
-          ? AppColors.letterboxdGreen.withValues(alpha: 0.18)
-          : AppColors.surface,
+          ? accentColor.withValues(alpha: 0.16)
+          : AppColors.surfaceElevated,
       child: InkWell(
         key: buttonKey,
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.zero,
             border: Border.all(
-              color: selected ? AppColors.letterboxdGreen : AppColors.border,
+              color: selected ? accentColor : AppColors.border,
+              width: selected ? 1.5 : 1.0,
             ),
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: selected
-                  ? AppColors.letterboxdGreen
-                  : AppColors.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    icon,
+                    size: 15,
+                    color: selected ? accentColor : AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: selected ? accentColor : AppColors.textPrimary,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ),
       ),

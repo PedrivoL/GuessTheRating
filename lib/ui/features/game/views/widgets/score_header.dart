@@ -288,9 +288,7 @@ class _AccountButton extends StatelessWidget {
           ? 'Conta conectada: @$loggedInUsername'
           : 'Criar conta ou entrar com @nick e senha',
       child: Material(
-        color: isLogged
-            ? AppColors.letterboxdOrange.withValues(alpha: 0.16)
-            : AppColors.surfaceElevated,
+        color: AppColors.surfaceElevated,
         child: InkWell(
           key: const Key('btn_account'),
           onTap: onPressed,
@@ -298,11 +296,7 @@ class _AccountButton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.zero,
-              border: Border.all(
-                color: isLogged
-                    ? AppColors.letterboxdOrange
-                    : AppColors.border,
-              ),
+              border: Border.all(color: AppColors.border),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -313,16 +307,14 @@ class _AccountButton extends StatelessWidget {
                       : Icons.lock_outline_rounded,
                   size: 15,
                   color: isLogged
-                      ? AppColors.letterboxdOrange
+                      ? AppColors.letterboxdBlue
                       : AppColors.textSecondary,
                 ),
                 const SizedBox(width: 5),
                 Text(
                   isLogged ? 'Conta: @$loggedInUsername' : 'Conta',
-                  style: TextStyle(
-                    color: isLogged
-                        ? AppColors.letterboxdOrange
-                        : AppColors.textPrimary,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
                   ),
@@ -350,8 +342,8 @@ class _ProfilePoolButton extends StatelessWidget {
     final isActive = activeUsername != null && activeUsername!.isNotEmpty;
     return Tooltip(
       message: isActive
-          ? 'Jogando com filmes de @$activeUsername (toque para alterar)'
-          : 'Usar seus filmes assistidos do Letterboxd',
+          ? 'Catálogo ativo: @$activeUsername (toque para alterar ou compartilhar)'
+          : 'Escolher catálogo (Geral, Meu Catálogo ou username de outra pessoa)',
       child: Material(
         color: isActive
             ? AppColors.letterboxdGreen.withValues(alpha: 0.16)
@@ -372,16 +364,16 @@ class _ProfilePoolButton extends StatelessWidget {
               children: [
                 Icon(
                   isActive
-                      ? Icons.person_rounded
-                      : Icons.person_outline_rounded,
-                  size: 16,
+                      ? Icons.video_library_rounded
+                      : Icons.video_library_outlined,
+                  size: 15,
                   color: isActive
                       ? AppColors.letterboxdGreen
                       : AppColors.letterboxdBlue,
                 ),
                 const SizedBox(width: 5),
                 Text(
-                  isActive ? '@$activeUsername' : 'Seu @nick',
+                  'Catálogo',
                   style: TextStyle(
                     color: isActive
                         ? AppColors.letterboxdGreen
@@ -390,6 +382,30 @@ class _ProfilePoolButton extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
+                if (isActive) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.letterboxdGreen.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.zero,
+                      border: Border.all(
+                        color: AppColors.letterboxdGreen.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    child: Text(
+                      '@$activeUsername',
+                      style: const TextStyle(
+                        color: AppColors.letterboxdGreen,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

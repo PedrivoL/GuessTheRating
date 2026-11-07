@@ -108,7 +108,10 @@ class _MyAppState extends State<MyApp> {
       title: 'GuessTheRating • Qual tem a Maior Nota?',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: GameScreen(viewModel: _activeViewModel),
+      onGenerateRoute: (settings) => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => GameScreen(viewModel: _activeViewModel),
+      ),
     );
   }
 }
