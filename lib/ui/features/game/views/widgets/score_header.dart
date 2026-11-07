@@ -345,9 +345,7 @@ class _ProfilePoolButton extends StatelessWidget {
           ? 'Catálogo ativo: @$activeUsername (toque para alterar ou compartilhar)'
           : 'Escolher catálogo (Geral, Meu Catálogo ou username de outra pessoa)',
       child: Material(
-        color: isActive
-            ? AppColors.letterboxdGreen.withValues(alpha: 0.16)
-            : AppColors.surfaceElevated,
+        color: AppColors.surfaceElevated,
         child: InkWell(
           key: const Key('btn_letterboxd_profile'),
           onTap: onPressed,
@@ -355,29 +353,25 @@ class _ProfilePoolButton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.zero,
-              border: Border.all(
-                color: isActive ? AppColors.letterboxdGreen : AppColors.border,
-              ),
+              border: Border.all(color: AppColors.border),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   isActive
-                      ? Icons.video_library_rounded
-                      : Icons.video_library_outlined,
-                  size: 15,
+                      ? Icons.person_rounded
+                      : Icons.person_outline_rounded,
+                  size: 16,
                   color: isActive
                       ? AppColors.letterboxdGreen
-                      : AppColors.letterboxdBlue,
+                      : AppColors.textSecondary,
                 ),
                 const SizedBox(width: 5),
-                Text(
+                const Text(
                   'Catálogo',
                   style: TextStyle(
-                    color: isActive
-                        ? AppColors.letterboxdGreen
-                        : AppColors.textPrimary,
+                    color: AppColors.textPrimary,
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
                   ),
@@ -390,7 +384,7 @@ class _ProfilePoolButton extends StatelessWidget {
                       vertical: 1,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.letterboxdGreen.withValues(alpha: 0.22),
+                      color: AppColors.letterboxdGreen.withValues(alpha: 0.16),
                       borderRadius: BorderRadius.zero,
                       border: Border.all(
                         color: AppColors.letterboxdGreen.withValues(alpha: 0.6),
