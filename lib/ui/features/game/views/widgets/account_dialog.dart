@@ -125,16 +125,10 @@ class _AccountDialogState extends State<AccountDialog> {
           password: password,
         );
       } else {
-        final resolved = _resolvedCsvResult;
-        if (resolved == null) {
-          throw const FormatException(
-            'Selecione o seu arquivo watched.csv para criar a conta.',
-          );
-        }
         await widget.viewModel.registerAccountWithCsv(
           username: nick,
           password: password,
-          resolvedResult: resolved,
+          resolvedResult: _resolvedCsvResult,
         );
       }
 
@@ -243,7 +237,7 @@ class _AccountDialogState extends State<AccountDialog> {
                     decoration: BoxDecoration(
                       color: AppColors.surfaceElevated,
                       borderRadius: BorderRadius.zero,
-                      border: Border.all(color: AppColors.letterboxdOrange),
+                      border: Border.all(color: AppColors.border),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,9 +245,9 @@ class _AccountDialogState extends State<AccountDialog> {
                         Row(
                           children: [
                             const Icon(
-                              Icons.account_box_rounded,
+                              Icons.verified_user_rounded,
                               size: 18,
-                              color: AppColors.letterboxdOrange,
+                              color: AppColors.letterboxdBlue,
                             ),
                             const SizedBox(width: 8),
                             Expanded(
@@ -320,7 +314,7 @@ class _AccountDialogState extends State<AccountDialog> {
                     key: const Key('btn_submit_account'),
                     onPressed: _isBusy ? null : _handleSubmit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.letterboxdOrange,
+                      backgroundColor: AppColors.letterboxdBlue,
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: const RoundedRectangleBorder(
@@ -376,7 +370,7 @@ class _AccountDialogState extends State<AccountDialog> {
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'SEU NICK NO LETTERBOXD',
+                    'SEU USERNAME',
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 11,
@@ -399,7 +393,7 @@ class _AccountDialogState extends State<AccountDialog> {
                       hintStyle: TextStyle(color: AppColors.textSecondary),
                       prefixText: '@',
                       prefixStyle: TextStyle(
-                        color: AppColors.letterboxdOrange,
+                        color: AppColors.letterboxdBlue,
                         fontWeight: FontWeight.w800,
                       ),
                       filled: true,
@@ -419,7 +413,7 @@ class _AccountDialogState extends State<AccountDialog> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.zero,
                         borderSide: BorderSide(
-                          color: AppColors.letterboxdOrange,
+                          color: AppColors.letterboxdBlue,
                           width: 1.5,
                         ),
                       ),
@@ -466,7 +460,7 @@ class _AccountDialogState extends State<AccountDialog> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.zero,
                         borderSide: BorderSide(
-                          color: AppColors.letterboxdOrange,
+                          color: AppColors.letterboxdBlue,
                           width: 1.5,
                         ),
                       ),
@@ -475,7 +469,7 @@ class _AccountDialogState extends State<AccountDialog> {
                   if (!_isLoginMode) ...[
                     const SizedBox(height: 14),
                     const Text(
-                      'ARQUIVO WATCHED.CSV (SÓ PRECISA ENVIAR 1 VEZ)',
+                      'ARQUIVO WATCHED.CSV (OPCIONAL)',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 11,
@@ -488,7 +482,7 @@ class _AccountDialogState extends State<AccountDialog> {
                   ] else ...[
                     const SizedBox(height: 10),
                     const Text(
-                      'Ao entrar, seus filmes do watched.csv e seu recorde salvos serão carregados automaticamente.',
+                      'Ao entrar, seu recorde e seus filmes do watched.csv (se enviados) serão carregados automaticamente.',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 11.5,
@@ -520,7 +514,7 @@ class _AccountDialogState extends State<AccountDialog> {
                     key: const Key('btn_submit_account'),
                     onPressed: _isBusy ? null : _handleSubmit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.letterboxdOrange,
+                      backgroundColor: AppColors.letterboxdBlue,
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: const RoundedRectangleBorder(
@@ -534,10 +528,12 @@ class _AccountDialogState extends State<AccountDialog> {
                     ),
                     child: Text(
                       _isBusy
-                          ? 'CARREGANDO FILMES...'
+                          ? 'PROCESSANDO...'
                           : (_isLoginMode
                                 ? 'ENTRAR NA CONTA'
-                                : 'CRIAR CONTA E SALVAR FILMES'),
+                                : (resolved != null
+                                      ? 'CRIAR CONTA E SALVAR FILMES'
+                                      : 'CRIAR CONTA')),
                     ),
                   ),
                 ],
@@ -563,7 +559,7 @@ class _AccountDialogState extends State<AccountDialog> {
             size: 18,
             color: _pickedFileName != null
                 ? AppColors.letterboxdGreen
-                : AppColors.letterboxdOrange,
+                : AppColors.letterboxdBlue,
           ),
           label: Text(
             _pickedFileName != null
@@ -593,7 +589,7 @@ class _AccountDialogState extends State<AccountDialog> {
             decoration: BoxDecoration(
               color: AppColors.surfaceElevated,
               borderRadius: BorderRadius.zero,
-              border: Border.all(color: AppColors.letterboxdOrange),
+              border: Border.all(color: AppColors.letterboxdBlue),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -613,7 +609,7 @@ class _AccountDialogState extends State<AccountDialog> {
                   value: _lookupCompleted / _lookupTotal,
                   minHeight: 5,
                   backgroundColor: AppColors.background,
-                  color: AppColors.letterboxdOrange,
+                  color: AppColors.letterboxdBlue,
                 ),
               ],
             ),
@@ -659,7 +655,7 @@ class _TabButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: selected
-          ? AppColors.letterboxdOrange.withValues(alpha: 0.18)
+          ? AppColors.letterboxdBlue.withValues(alpha: 0.18)
           : AppColors.surfaceElevated,
       child: InkWell(
         key: buttonKey,
@@ -670,14 +666,14 @@ class _TabButton extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.zero,
             border: Border.all(
-              color: selected ? AppColors.letterboxdOrange : AppColors.border,
+              color: selected ? AppColors.letterboxdBlue : AppColors.border,
             ),
           ),
           child: Text(
             label,
             style: TextStyle(
               color: selected
-                  ? AppColors.letterboxdOrange
+                  ? AppColors.letterboxdBlue
                   : AppColors.textSecondary,
               fontSize: 12.5,
               fontWeight: FontWeight.w800,

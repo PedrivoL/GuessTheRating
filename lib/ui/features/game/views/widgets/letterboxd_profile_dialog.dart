@@ -106,12 +106,15 @@ class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
   }
 
   Future<void> _handleSelectOwnCatalog() async {
-    final hasOwn = widget.viewModel.currentAccount != null ||
-        widget.viewModel.watchedProfile != null;
+    final accountHasMovies =
+        (widget.viewModel.currentAccount?.watchedMovieIds.length ?? 0) >= 2;
+    final profileHasMovies =
+        (widget.viewModel.watchedProfile?.watchedMovieIds.length ?? 0) >= 2;
+    final hasOwn = accountHasMovies || profileHasMovies;
     if (!hasOwn) {
       setState(() {
         _errorMessage =
-            'Nenhum catálogo próprio salvo ainda. Busque um username abaixo ou cadastre seu watched.csv no botão Conta.';
+            'Nenhum catálogo próprio salvo ainda. Busque um username abaixo ou envie seu watched.csv no botão Conta.';
       });
       return;
     }
@@ -137,8 +140,10 @@ class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
     final isUsingWatched = widget.viewModel.isUsingWatchedPool;
 
     final ownUsername = currentAccount?.username ?? existingProfile?.username;
-    final ownCount = currentAccount?.watchedMovieIds.length ??
-        existingProfile?.watchedMovieIds.length;
+    final ownCount = (currentAccount != null &&
+            currentAccount.watchedMovieIds.length >= 2)
+        ? currentAccount.watchedMovieIds.length
+        : existingProfile?.watchedMovieIds.length;
     final isOwnCatalogActive = isUsingWatched &&
         existingProfile != null &&
         (currentAccount == null ||

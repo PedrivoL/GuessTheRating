@@ -304,7 +304,11 @@ class GameViewModel extends ChangeNotifier {
       _highScore = (savedAccount != null && savedAccount.highScore > savedHighScore)
           ? savedAccount.highScore
           : savedHighScore;
-      _watchedProfile = savedProfile ?? savedAccount?.toWatchedProfile();
+      _watchedProfile =
+          savedProfile ??
+          (savedAccount != null && savedAccount.watchedMovieIds.length >= 2
+              ? savedAccount.toWatchedProfile()
+              : null);
 
       final targetNick = extractTargetNickFromUri(initialUri ?? Uri.base);
       if (targetNick != null && targetNick.isNotEmpty) {
@@ -313,7 +317,8 @@ class GameViewModel extends ChangeNotifier {
             targetNick,
           );
           if (_isDisposed || generation != _runGeneration) return;
-          if (targetAccount != null) {
+          if (targetAccount != null &&
+              targetAccount.watchedMovieIds.length >= 2) {
             final targetProfile = targetAccount.toWatchedProfile(isActive: true);
             await _watchedProfileRepository.saveProfile(targetProfile);
             if (_isDisposed || generation != _runGeneration) return;
@@ -417,47 +422,55 @@ class GameViewModel extends ChangeNotifier {
     return customById.values.toList(growable: false);
   }
 
-  /// Cria (ou atualiza) uma conta com `@nick` + senha/PIN e o `watched.csv` carregado.
+  /// Cria (ou atualiza) uma conta com `username` + senha/PIN e, opcionalmente, o `watched.csv` carregado.
   Future<UserAccount> registerAccountWithCsv({
     required String username,
     required String password,
-    required WatchedCsvMatchResult resolvedResult,
+    WatchedCsvMatchResult? resolvedResult,
   }) async {
-    if (resolvedResult.matchedMovies.length < 2) {
+    if (resolvedResult != null && resolvedResult.matchedMovies.length < 2) {
       throw const FormatException(
         'Encontrados menos de 2 filmes compatíveis no arquivo watched.csv.',
       );
     }
 
-    final customMovies = _extractCustomMovies(resolvedResult);
-    final watchedIds = resolvedResult.matchedMovies
-        .map((m) => m.id)
-        .toList(growable: false);
+    final customMovies = resolvedResult != null
+        ? _extractCustomMovies(resolvedResult)
+        : const <Movie>[];
+    final watchedIds = resolvedResult != null
+        ? resolvedResult.matchedMovies
+              .map((m) => m.id)
+              .toList(growable: false)
+        : const <String>[];
+    final totalCsvCount = resolvedResult?.totalCsvRows ?? 0;
 
     final account = await _accountRepository.registerAccount(
       username: username,
       password: password,
       watchedMovieIds: watchedIds,
-      totalCsvCount: resolvedResult.totalCsvRows,
+      totalCsvCount: totalCsvCount,
       customMovies: customMovies,
       initialHighScore: _highScore,
     );
 
-    final profile = account.toWatchedProfile(isActive: true);
-    await _watchedProfileRepository.saveProfile(profile);
-    if (_isDisposed) return account;
+    if (account.watchedMovieIds.length >= 2) {
+      final profile = account.toWatchedProfile(isActive: true);
+      await _watchedProfileRepository.saveProfile(profile);
+      if (_isDisposed) return account;
+      _watchedProfile = profile;
+    }
 
+    if (_isDisposed) return account;
     _currentAccount = account;
     if (account.highScore > _highScore) {
       _highScore = account.highScore;
       await _scoreRepository.registerScore(_highScore);
     }
-    _watchedProfile = profile;
     _startNewRun();
     return account;
   }
 
-  /// Faz login em uma conta existente por `@nick` + senha/PIN, restaurando a pool de filmes e o recorde.
+  /// Faz login em uma conta existente por `username` + senha/PIN, restaurando a pool de filmes (se houver) e o recorde.
   Future<UserAccount> loginAccount({
     required String username,
     required String password,
@@ -466,8 +479,12 @@ class GameViewModel extends ChangeNotifier {
       username: username,
       password: password,
     );
-    final profile = account.toWatchedProfile(isActive: true);
-    await _watchedProfileRepository.saveProfile(profile);
+    if (account.watchedMovieIds.length >= 2) {
+      final profile = account.toWatchedProfile(isActive: true);
+      await _watchedProfileRepository.saveProfile(profile);
+      if (_isDisposed) return account;
+      _watchedProfile = profile;
+    }
     if (_isDisposed) return account;
 
     _currentAccount = account;
@@ -475,7 +492,6 @@ class GameViewModel extends ChangeNotifier {
       _highScore = account.highScore;
       await _scoreRepository.registerScore(_highScore);
     }
-    _watchedProfile = profile;
     _startNewRun();
     return account;
   }
@@ -498,6 +514,11 @@ class GameViewModel extends ChangeNotifier {
 
     final account = await _accountRepository.findAccountByUsername(norm);
     if (account != null) {
+      if (account.watchedMovieIds.length < 2) {
+        throw FormatException(
+          'A conta @$norm ainda não enviou um arquivo watched.csv.',
+        );
+      }
       final profile = account.toWatchedProfile(isActive: true);
       await _watchedProfileRepository.saveProfile(profile);
       if (_isDisposed) return;
@@ -596,7 +617,7 @@ class GameViewModel extends ChangeNotifier {
   /// Ativa o catálogo próprio do jogador (da conta conectada ou perfil salvo).
   Future<void> activateOwnCatalog() async {
     final account = _currentAccount;
-    if (account != null) {
+    if (account != null && account.watchedMovieIds.length >= 2) {
       final profile = account.toWatchedProfile(isActive: true);
       await _watchedProfileRepository.saveProfile(profile);
       if (_isDisposed) return;

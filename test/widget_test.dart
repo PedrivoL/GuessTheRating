@@ -535,6 +535,32 @@ Date,Name,Year,Letterboxd URI
         expect(vm.currentAccount?.username, equals('pedrivol'));
         expect(vm.isUsingWatchedPool, isTrue);
         expect(vm.activePoolCount, equals(2));
+
+        // Permite também criar conta sem watched.csv (opcional)
+        await vm.logoutAccount();
+        await vm.clearWatchedProfile();
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const Key('btn_account')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('tab_register_account')));
+        await tester.pump();
+        await tester.enterText(
+          find.byKey(const Key('input_account_nick')),
+          'semletterboxd',
+        );
+        await tester.enterText(
+          find.byKey(const Key('input_account_password')),
+          '9999',
+        );
+        expect(find.text('CRIAR CONTA'), findsOneWidget);
+        await tester.tap(find.byKey(const Key('btn_submit_account')));
+        await tester.pumpAndSettle();
+
+        expect(vm.currentAccount?.username, equals('semletterboxd'));
+        expect(vm.currentAccount?.watchedMovieIds, isEmpty);
+        expect(vm.isUsingWatchedPool, isFalse);
+        expect(find.text('Conta: @semletterboxd'), findsOneWidget);
       },
     );
 
