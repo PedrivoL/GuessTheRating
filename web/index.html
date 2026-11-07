@@ -209,6 +209,20 @@
   </noscript>
 
   <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        for (var i = 0; i < registrations.length; i++) {
+          registrations[i].unregister();
+        }
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(function (names) {
+        for (var i = 0; i < names.length; i++) {
+          caches.delete(names[i]);
+        }
+      });
+    }
     window.addEventListener('flutter-first-frame', function () {
       var splash = document.getElementById('loading-splash');
       if (!splash) return;
@@ -220,6 +234,6 @@
       }, 280);
     });
   </script>
-  <script src="flutter_bootstrap.js" async></script>
+  <script src="flutter_bootstrap.js?v=20261107_2" async></script>
 </body>
 </html>
