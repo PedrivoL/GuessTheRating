@@ -29,9 +29,6 @@ class MoviePosterCard extends StatelessWidget {
           ? AppColors.letterboxdGreen
           : AppColors.errorRed;
     }
-    if (!showRating && isInteractive) {
-      return AppColors.letterboxdBlue.withValues(alpha: 0.65);
-    }
     return AppColors.border;
   }
 
