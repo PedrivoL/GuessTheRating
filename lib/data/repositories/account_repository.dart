@@ -14,6 +14,9 @@ class AccountRepository {
   Future<UserAccount?> findAccountByUsername(String username) =>
       _accountService.findAccountByUsername(username);
 
+  Future<List<LeaderboardEntry>> getLeaderboard() =>
+      _accountService.fetchLeaderboard();
+
   Future<UserAccount> registerAccount({
     required String username,
     required String password,

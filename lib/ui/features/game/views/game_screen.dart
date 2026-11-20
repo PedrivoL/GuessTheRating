@@ -5,6 +5,7 @@ import 'package:my_first_app/ui/core/utils/csv_file_picker.dart';
 import 'package:my_first_app/ui/features/game/view_models/game_view_model.dart';
 import 'package:my_first_app/ui/features/game/views/widgets/account_dialog.dart';
 import 'package:my_first_app/ui/features/game/views/widgets/game_over_overlay.dart';
+import 'package:my_first_app/ui/features/game/views/widgets/leaderboard_dialog.dart';
 import 'package:my_first_app/ui/features/game/views/widgets/letterboxd_profile_dialog.dart';
 import 'package:my_first_app/ui/features/game/views/widgets/movie_poster_card.dart';
 import 'package:my_first_app/ui/features/game/views/widgets/score_header.dart';
@@ -39,6 +40,13 @@ class GameScreen extends StatelessWidget {
         viewModel: viewModel,
         csvFilePicker: csvFilePicker,
       ),
+    );
+  }
+
+  void _openLeaderboardDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => LeaderboardDialog(viewModel: viewModel),
     );
   }
 
@@ -152,6 +160,7 @@ class GameScreen extends StatelessWidget {
                 onRestart: viewModel.restartGame,
                 onOpenProfile: () => _openProfileDialog(context),
                 onOpenAccount: () => _openAccountDialog(context),
+                onOpenLeaderboard: () => _openLeaderboardDialog(context),
                 activeUsername: viewModel.isUsingWatchedPool
                     ? viewModel.watchedProfile?.username
                     : null,

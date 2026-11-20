@@ -123,13 +123,10 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Account profiles & Letterboxd pools
+    // Account profiles, Letterboxd pools & Global Leaderboard
     match /accounts/{username} {
-      // Allow looking up a specific account by @nick to load its movie pool or verify login
-      allow get: if true;
-
-      // Prevent enumerating all accounts
-      allow list: if false;
+      // Allow reading individual accounts by @nick and listing accounts for the Global Leaderboard
+      allow get, list: if true;
 
       // Create new account with strict schema & field validation
       allow create: if isValidAccount(request.resource.data, username);

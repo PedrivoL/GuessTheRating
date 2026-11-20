@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 abstract interface class AccountService {
   Future<UserAccount?> loadActiveSessionAccount();
   Future<UserAccount?> findAccountByUsername(String username);
+  Future<List<LeaderboardEntry>> fetchLeaderboard();
   Future<UserAccount> registerAccount({
     required String username,
     required String password,
@@ -206,6 +207,40 @@ class SharedPrefsAccountService implements AccountService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_activeUsernameKey);
   }
+
+  @override
+  Future<List<LeaderboardEntry>> fetchLeaderboard() async {
+    final prefs = await SharedPreferences.getInstance();
+    final localAccounts = await _readAllAccounts(prefs);
+    final scoreByUsername = <String, int>{
+      for (final acc in localAccounts.values)
+        UserAccount.normalizeUsername(acc.username): acc.highScore,
+    };
+
+    if (firestoreClient.isConfigured) {
+      final remoteEntries = await firestoreClient.fetchLeaderboard();
+      for (final entry in remoteEntries) {
+        final norm = UserAccount.normalizeUsername(entry.username);
+        if (norm.isEmpty) continue;
+        final existing = scoreByUsername[norm];
+        if (existing == null || entry.highScore > existing) {
+          scoreByUsername[norm] = entry.highScore;
+        }
+      }
+    }
+
+    final entries = <LeaderboardEntry>[
+      for (final e in scoreByUsername.entries)
+        if (e.key.isNotEmpty)
+          LeaderboardEntry(username: e.key, highScore: e.value),
+    ];
+    entries.sort((a, b) {
+      final cmp = b.highScore.compareTo(a.highScore);
+      if (cmp != 0) return cmp;
+      return a.username.compareTo(b.username);
+    });
+    return entries;
+  }
 }
 
 /// Implementação em memória para testes e Widget Previews.
@@ -301,5 +336,22 @@ class InMemoryAccountService implements AccountService {
   @override
   Future<void> logout() async {
     _activeUsername = null;
+  }
+
+  @override
+  Future<List<LeaderboardEntry>> fetchLeaderboard() async {
+    final entries = <LeaderboardEntry>[
+      for (final acc in _accounts.values)
+        LeaderboardEntry(
+          username: UserAccount.normalizeUsername(acc.username),
+          highScore: acc.highScore,
+        ),
+    ];
+    entries.sort((a, b) {
+      final cmp = b.highScore.compareTo(a.highScore);
+      if (cmp != 0) return cmp;
+      return a.username.compareTo(b.username);
+    });
+    return entries;
   }
 }

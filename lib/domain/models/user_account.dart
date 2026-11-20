@@ -118,3 +118,15 @@ class UserAccount {
     'highScore': highScore,
   };
 }
+
+/// Entrada do ranking global com `username` e `highScore`.
+@immutable
+class LeaderboardEntry {
+  const LeaderboardEntry({
+    required this.username,
+    required this.highScore,
+  });
+
+  final String username;
+  final int highScore;
+}

@@ -28,6 +28,11 @@ class FirestoreAccountClient {
     return 'https://firestore.googleapis.com/v1/projects/$projectId/databases/$encodedDb/documents/accounts/$norm';
   }
 
+  String _collectionLeaderboardUrl({int pageSize = 200}) {
+    final encodedDb = Uri.encodeComponent(databaseId);
+    return 'https://firestore.googleapis.com/v1/projects/$projectId/databases/$encodedDb/documents/accounts?pageSize=$pageSize&mask.fieldPaths=username&mask.fieldPaths=highScore';
+  }
+
   Future<UserAccount?> fetchAccount(String username) async {
     if (!isConfigured) return null;
     final raw = await impl.httpGetJson(_docUrl(username));
@@ -35,10 +40,49 @@ class FirestoreAccountClient {
     return decodeFirestoreDocument(raw);
   }
 
+  Future<List<LeaderboardEntry>> fetchLeaderboard() async {
+    if (!isConfigured) return const <LeaderboardEntry>[];
+    final raw = await impl.httpGetJson(_collectionLeaderboardUrl());
+    if (raw == null) return const <LeaderboardEntry>[];
+    final docs = raw['documents'];
+    if (docs is! List) return const <LeaderboardEntry>[];
+    final entries = <LeaderboardEntry>[];
+    for (final item in docs) {
+      if (item is Map<String, dynamic>) {
+        final entry = decodeLeaderboardEntry(item);
+        if (entry != null) {
+          entries.add(entry);
+        }
+      }
+    }
+    return entries;
+  }
+
   Future<bool> upsertAccount(UserAccount account) async {
     if (!isConfigured) return false;
     final body = encodeFirestoreDocument(account);
     return impl.httpPatchJson(_docUrl(account.username), body);
+  }
+
+  static LeaderboardEntry? decodeLeaderboardEntry(Map<String, dynamic> doc) {
+    final fields = doc['fields'] as Map<String, dynamic>?;
+    if (fields == null) return null;
+    final usernameField = fields['username'] as Map<String, dynamic>?;
+    final rawUsername = usernameField?['stringValue'] as String?;
+    final norm = rawUsername != null
+        ? UserAccount.normalizeUsername(rawUsername)
+        : '';
+    if (norm.isEmpty) return null;
+
+    final scoreField = fields['highScore'] as Map<String, dynamic>?;
+    final rawScore = scoreField?['integerValue'];
+    var highScore = 0;
+    if (rawScore is int) {
+      highScore = rawScore;
+    } else if (rawScore is String) {
+      highScore = int.tryParse(rawScore) ?? 0;
+    }
+    return LeaderboardEntry(username: norm, highScore: highScore);
   }
 
   static Map<String, dynamic> encodeFirestoreDocument(UserAccount account) {

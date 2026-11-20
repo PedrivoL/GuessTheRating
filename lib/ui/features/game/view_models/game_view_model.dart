@@ -504,6 +504,17 @@ class GameViewModel extends ChangeNotifier {
     _safeNotifyListeners();
   }
 
+  /// Retorna o ranking global de jogadores ordenados pelo maior recorde.
+  Future<List<LeaderboardEntry>> fetchLeaderboard() async {
+    final acc = _currentAccount;
+    if (acc != null && _highScore > acc.highScore) {
+      final updatedAcc = acc.copyWith(highScore: _highScore);
+      _currentAccount = updatedAcc;
+      await _accountRepository.updateAccount(updatedAcc);
+    }
+    return _accountRepository.getLeaderboard();
+  }
+
   /// Carrega a pool de filmes apenas pelo `username` (caso o perfil já tenha sido cadastrado em uma conta),
   /// sem exigir senha nem reenvio do `watched.csv`.
   Future<void> loadPoolByNick(String username) async {

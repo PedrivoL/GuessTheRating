@@ -626,5 +626,85 @@ Date,Name,Year,Letterboxd URI
         expect(vm.activePoolCount, equals(2));
       },
     );
+
+    testWidgets(
+      'abre o Ranking Global ao clicar na setinha embaixo de Recorde e ordena jogadores por recorde',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final accountService = InMemoryAccountService(
+          initialAccounts: {
+            'bronze_player': UserAccount(
+              username: 'bronze_player',
+              passwordHash: UserAccount.hashPassword('bronze_player', '1234'),
+              watchedMovieIds: const [],
+              totalCsvCount: 0,
+              highScore: 5,
+            ),
+            'champion': UserAccount(
+              username: 'champion',
+              passwordHash: UserAccount.hashPassword('champion', '1234'),
+              watchedMovieIds: const [],
+              totalCsvCount: 0,
+              highScore: 22,
+            ),
+            'silver_player': UserAccount(
+              username: 'silver_player',
+              passwordHash: UserAccount.hashPassword('silver_player', '1234'),
+              watchedMovieIds: const [],
+              totalCsvCount: 0,
+              highScore: 14,
+            ),
+          },
+          activeUsername: 'silver_player',
+        );
+
+        final vm = GameViewModel(
+          movieRepository: MovieRepository(
+            catalogService: const StaticMovieCatalogService(sampleMovies),
+          ),
+          scoreRepository: ScoreRepository(
+            storageService: InMemoryScoreService(initialHighScore: 14),
+          ),
+          accountRepository: AccountRepository(accountService: accountService),
+          random: Random(19),
+        );
+        await vm.initialize();
+        addTearDown(vm.dispose);
+
+        await tester.pumpWidget(MyApp(viewModel: vm));
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(const Key('btn_open_leaderboard')), findsOneWidget);
+        await tester.tap(find.byKey(const Key('btn_open_leaderboard')));
+        await tester.pumpAndSettle();
+
+        expect(find.text('RANKING GLOBAL'), findsOneWidget);
+        expect(find.text('#1'), findsOneWidget);
+        expect(find.text('#2'), findsOneWidget);
+        expect(find.text('#3'), findsOneWidget);
+        expect(find.text('@champion'), findsOneWidget);
+        expect(find.text('@silver_player'), findsOneWidget);
+        expect(find.text('@bronze_player'), findsOneWidget);
+        expect(find.text('VOCÊ'), findsOneWidget);
+
+        final pos1 = tester.getTopLeft(
+          find.byKey(const Key('leaderboard_row_champion')),
+        );
+        final pos2 = tester.getTopLeft(
+          find.byKey(const Key('leaderboard_row_silver_player')),
+        );
+        final pos3 = tester.getTopLeft(
+          find.byKey(const Key('leaderboard_row_bronze_player')),
+        );
+        expect(pos1.dy, lessThan(pos2.dy));
+        expect(pos2.dy, lessThan(pos3.dy));
+
+        await tester.tap(find.byKey(const Key('btn_close_leaderboard_dialog')));
+        await tester.pumpAndSettle();
+        expect(find.text('RANKING GLOBAL'), findsNothing);
+      },
+    );
   });
 }

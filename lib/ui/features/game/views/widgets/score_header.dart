@@ -16,6 +16,7 @@ class ScoreHeader extends StatelessWidget {
     required this.onRestart,
     required this.onOpenProfile,
     required this.onOpenAccount,
+    this.onOpenLeaderboard,
     this.activeUsername,
     this.loggedInAccountUsername,
   });
@@ -28,6 +29,7 @@ class ScoreHeader extends StatelessWidget {
   final VoidCallback onRestart;
   final VoidCallback onOpenProfile;
   final VoidCallback onOpenAccount;
+  final VoidCallback? onOpenLeaderboard;
   final String? activeUsername;
   final String? loggedInAccountUsername;
 
@@ -40,7 +42,7 @@ class ScoreHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Wrap(
         alignment: WrapAlignment.spaceBetween,
-        crossAxisAlignment: WrapCrossAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.start,
         spacing: 12,
         runSpacing: 8,
         children: [
@@ -81,7 +83,7 @@ class ScoreHeader extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 6,
-            crossAxisAlignment: WrapCrossAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.start,
             children: [
               _AccountButton(
                 loggedInUsername: loggedInAccountUsername,
@@ -99,13 +101,20 @@ class ScoreHeader extends StatelessWidget {
                 value: '$score',
                 highlighted: false,
               ),
-              _ScorePill(
-                key: const Key('high_score_pill'),
-                icon: Icons.emoji_events_rounded,
-                iconColor: AppColors.trophyYellow,
-                label: isNewRecord ? 'Novo Recorde' : 'Recorde',
-                value: '$highScore',
-                highlighted: isNewRecord,
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _ScorePill(
+                    key: const Key('high_score_pill'),
+                    icon: Icons.emoji_events_rounded,
+                    iconColor: AppColors.trophyYellow,
+                    label: isNewRecord ? 'Novo Recorde' : 'Recorde',
+                    value: '$highScore',
+                    highlighted: isNewRecord,
+                  ),
+                  if (onOpenLeaderboard != null)
+                    _LeaderboardArrowButton(onPressed: onOpenLeaderboard!),
+                ],
               ),
             ],
           ),
@@ -437,6 +446,44 @@ class _ScorePill extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LeaderboardArrowButton extends StatelessWidget {
+  const _LeaderboardArrowButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Ver Ranking Global',
+      child: Material(
+        color: AppColors.surfaceElevated,
+        child: InkWell(
+          key: const Key('btn_open_leaderboard'),
+          onTap: onPressed,
+          child: Container(
+            width: 38,
+            height: 16,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              borderRadius: BorderRadius.zero,
+              border: Border(
+                left: BorderSide(color: AppColors.border),
+                right: BorderSide(color: AppColors.border),
+                bottom: BorderSide(color: AppColors.border),
+              ),
+            ),
+            child: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 16,
+              color: Colors.white,
+            ),
+          ),
+        ),
       ),
     );
   }
