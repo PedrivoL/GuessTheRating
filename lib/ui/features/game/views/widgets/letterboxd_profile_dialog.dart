@@ -236,6 +236,7 @@ class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
                         subtitle: 'Filmes do Letterboxd',
                         selected: !isUsingWatched,
                         accentColor: AppColors.letterboxdBlue,
+                        labelColor: Colors.white,
                         onTap: _isBusy ? null : _handleSelectGeneralCatalog,
                       ),
                     ),
@@ -250,6 +251,7 @@ class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
                             : 'Não conectado',
                         selected: isOwnCatalogActive,
                         accentColor: AppColors.letterboxdGreen,
+                        labelColor: Colors.white,
                         onTap: _isBusy ? null : _handleSelectOwnCatalog,
                       ),
                     ),
@@ -450,9 +452,7 @@ class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
                           ),
                           const SizedBox(width: 8),
                           Material(
-                            color: _copiedLink
-                                ? AppColors.letterboxdGreen
-                                : AppColors.surface,
+                            color: const Color(0xFF00AC1C),
                             child: InkWell(
                               key: const Key('btn_copy_catalog_link'),
                               onTap: _handleCopyShareLink,
@@ -464,7 +464,8 @@ class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.zero,
                                   border: Border.all(
-                                    color: AppColors.letterboxdGreen,
+                                    color: const Color(0xFF28C840),
+                                    width: 1.2,
                                   ),
                                 ),
                                 child: Row(
@@ -475,19 +476,16 @@ class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
                                           ? Icons.check_rounded
                                           : Icons.copy_rounded,
                                       size: 14,
-                                      color: _copiedLink
-                                          ? Colors.black
-                                          : AppColors.letterboxdGreen,
+                                      color: Colors.white,
                                     ),
                                     const SizedBox(width: 5),
                                     Text(
                                       _copiedLink ? 'COPIADO!' : 'COPIAR LINK',
-                                      style: TextStyle(
-                                        color: _copiedLink
-                                            ? Colors.black
-                                            : AppColors.letterboxdGreen,
+                                      style: const TextStyle(
+                                        color: Colors.white,
                                         fontSize: 11.5,
                                         fontWeight: FontWeight.w900,
+                                        letterSpacing: 0.5,
                                       ),
                                     ),
                                   ],
@@ -502,8 +500,13 @@ class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
                         key: const Key('btn_apply_profile'),
                         onPressed: _isBusy ? null : _handleLoadUsernameCatalog,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.letterboxdGreen,
-                          foregroundColor: Colors.black,
+                          backgroundColor: const Color(0xFF00AC1C),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          side: const BorderSide(
+                            color: Color(0xFF28C840),
+                            width: 1.2,
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 13),
                           shape: const RoundedRectangleBorder(
                             borderRadius: BorderRadius.zero,
@@ -511,7 +514,7 @@ class _LetterboxdProfileDialogState extends State<LetterboxdProfileDialog> {
                           textStyle: const TextStyle(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: 0.5,
+                            letterSpacing: 0.8,
                           ),
                         ),
                         child: Text(
@@ -559,6 +562,7 @@ class _ModeChoiceButton extends StatelessWidget {
     required this.subtitle,
     required this.selected,
     required this.accentColor,
+    this.labelColor,
     required this.onTap,
   });
 
@@ -568,6 +572,7 @@ class _ModeChoiceButton extends StatelessWidget {
   final String subtitle;
   final bool selected;
   final Color accentColor;
+  final Color? labelColor;
   final VoidCallback? onTap;
 
   @override
@@ -605,7 +610,8 @@ class _ModeChoiceButton extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: selected ? accentColor : AppColors.textPrimary,
+                        color: labelColor ??
+                            (selected ? accentColor : AppColors.textPrimary),
                         fontSize: 12.5,
                         fontWeight: FontWeight.w900,
                       ),
