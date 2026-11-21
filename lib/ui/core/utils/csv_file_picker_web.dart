@@ -7,7 +7,8 @@ Future<PickedCsvFile?> pickCsvFileImpl() {
   final completer = Completer<PickedCsvFile?>();
   final input = web.HTMLInputElement()
     ..type = 'file'
-    ..accept = '.csv,text/csv';
+    ..accept =
+        '.zip,.csv,application/zip,application/x-zip-compressed,text/csv,text/comma-separated-values,application/csv,application/octet-stream';
 
   input.onchange = ((web.Event _) {
     final files = input.files;
@@ -23,16 +24,31 @@ Future<PickedCsvFile?> pickCsvFileImpl() {
 
     final reader = web.FileReader();
     reader.onload = ((web.Event _) {
-      final result = reader.result;
-      final text = (result as JSString?)?.toDart ?? '';
-      if (!completer.isCompleted) {
-        completer.complete(PickedCsvFile(name: file.name, content: text));
+      try {
+        final result = reader.result;
+        if (result == null) {
+          if (!completer.isCompleted) completer.complete(null);
+          return;
+        }
+        final buffer = (result as JSArrayBuffer).toDart;
+        final bytes = buffer.asUint8List();
+        final picked = PickedCsvFile.fromBytes(
+          name: file.name,
+          bytes: bytes,
+        );
+        if (!completer.isCompleted) {
+          completer.complete(picked);
+        }
+      } catch (e) {
+        if (!completer.isCompleted) {
+          completer.completeError(e);
+        }
       }
     }).toJS;
     reader.onerror = ((web.Event _) {
       if (!completer.isCompleted) completer.complete(null);
     }).toJS;
-    reader.readAsText(file);
+    reader.readAsArrayBuffer(file);
   }).toJS;
 
   input.click();

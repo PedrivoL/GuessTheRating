@@ -1,4 +1,7 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -86,6 +89,35 @@ void main() {
         () => Movie.fromJson(<String, dynamic>{'invalid': true}),
         throwsFormatException,
       );
+    });
+
+    test('extrai watched.csv e username direto de um arquivo .zip comprimido com DEFLATE', () {
+      const csvText =
+          'Date,Name,Year,Letterboxd URI\n2024-01-10,Parasite,2019,https://boxd.it/hTha\n';
+      final rawBytes = utf8.encode(csvText);
+      final compressed = ZLibCodec(raw: true).encode(rawBytes);
+      final entryName = utf8.encode('watched.csv');
+
+      final zipBuilder = BytesBuilder();
+      final localHeader = ByteData(30 + entryName.length);
+      localHeader.setUint32(0, 0x04034b50, Endian.little);
+      localHeader.setUint16(4, 20, Endian.little);
+      localHeader.setUint16(8, 8, Endian.little); // DEFLATE
+      localHeader.setUint32(18, compressed.length, Endian.little);
+      localHeader.setUint32(22, rawBytes.length, Endian.little);
+      localHeader.setUint16(26, entryName.length, Endian.little);
+      for (var i = 0; i < entryName.length; i++) {
+        localHeader.setUint8(30 + i, entryName[i]);
+      }
+      zipBuilder.add(localHeader.buffer.asUint8List());
+      zipBuilder.add(compressed);
+
+      final picked = PickedCsvFile.fromBytes(
+        name: 'letterboxd-pedrivol-2026-11-20-12-00-utc.zip',
+        bytes: zipBuilder.toBytes(),
+      );
+      expect(picked.suggestedUsername, equals('pedrivol'));
+      expect(picked.content, equals(csvText));
     });
 
     testWidgets('catálogo real assets/data/movies.json carrega sem erros', (

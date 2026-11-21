@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:my_first_app/domain/models/watched_profile.dart';
 import 'package:my_first_app/ui/core/theme/app_theme.dart';
 import 'package:my_first_app/ui/core/utils/csv_file_picker.dart';
+import 'package:my_first_app/ui/core/utils/external_url_launcher.dart';
 import 'package:my_first_app/ui/features/game/view_models/game_view_model.dart';
 import 'package:my_first_app/ui/features/game/views/widgets/letterboxd_dots.dart';
 
@@ -59,6 +60,11 @@ class _AccountDialogState extends State<AccountDialog> {
       if (!mounted || picked == null) return;
 
       setState(() {
+        if (_nickController.text.trim().isEmpty &&
+            picked.suggestedUsername != null &&
+            picked.suggestedUsername!.isNotEmpty) {
+          _nickController.text = picked.suggestedUsername!;
+        }
         _pickedFileName = picked.name;
         _resolvedCsvResult = null;
         _isBusy = true;
@@ -112,7 +118,7 @@ class _AccountDialogState extends State<AccountDialog> {
         final resolved = _resolvedCsvResult;
         if (resolved == null) {
           throw const FormatException(
-            'Selecione um novo arquivo watched.csv para atualizar os filmes da sua conta.',
+            'Selecione o arquivo .zip ou watched.csv para atualizar os filmes da sua conta.',
           );
         }
         await widget.viewModel.applyResolvedWatchedCsv(
@@ -299,7 +305,7 @@ class _AccountDialogState extends State<AccountDialog> {
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'ATUALIZAR WATCHED.CSV DA CONTA',
+                    'IMPORTAR OU ATUALIZAR FILMES DO LETTERBOXD',
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 11,
@@ -314,16 +320,21 @@ class _AccountDialogState extends State<AccountDialog> {
                     key: const Key('btn_submit_account'),
                     onPressed: _isBusy ? null : _handleSubmit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.letterboxdBlue,
-                      foregroundColor: Colors.black,
+                      backgroundColor: const Color(0xFF00AC1C),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      side: const BorderSide(
+                        color: Color(0xFF28C840),
+                        width: 1.2,
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: const RoundedRectangleBorder(
                         borderRadius: BorderRadius.zero,
                       ),
                       textStyle: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 0.5,
+                        letterSpacing: 0.8,
                       ),
                     ),
                     child: Text(
@@ -393,7 +404,7 @@ class _AccountDialogState extends State<AccountDialog> {
                       hintStyle: TextStyle(color: AppColors.textSecondary),
                       prefixText: '@',
                       prefixStyle: TextStyle(
-                        color: AppColors.letterboxdBlue,
+                        color: AppColors.letterboxdGreen,
                         fontWeight: FontWeight.w800,
                       ),
                       filled: true,
@@ -413,7 +424,7 @@ class _AccountDialogState extends State<AccountDialog> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.zero,
                         borderSide: BorderSide(
-                          color: AppColors.letterboxdBlue,
+                          color: AppColors.letterboxdGreen,
                           width: 1.5,
                         ),
                       ),
@@ -460,7 +471,7 @@ class _AccountDialogState extends State<AccountDialog> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.zero,
                         borderSide: BorderSide(
-                          color: AppColors.letterboxdBlue,
+                          color: AppColors.letterboxdGreen,
                           width: 1.5,
                         ),
                       ),
@@ -469,7 +480,7 @@ class _AccountDialogState extends State<AccountDialog> {
                   if (!_isLoginMode) ...[
                     const SizedBox(height: 14),
                     const Text(
-                      'ARQUIVO WATCHED.CSV (OPCIONAL)',
+                      'IMPORTAR FILMES DO LETTERBOXD (OPCIONAL)',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 11,
@@ -479,16 +490,6 @@ class _AccountDialogState extends State<AccountDialog> {
                     ),
                     const SizedBox(height: 6),
                     _buildCsvPickerSection(resolved),
-                  ] else ...[
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Ao entrar, seu recorde e seus filmes do watched.csv (se enviados) serão carregados automaticamente.',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 11.5,
-                        height: 1.35,
-                      ),
-                    ),
                   ],
                   if (_errorMessage != null) ...[
                     const SizedBox(height: 12),
@@ -514,16 +515,21 @@ class _AccountDialogState extends State<AccountDialog> {
                     key: const Key('btn_submit_account'),
                     onPressed: _isBusy ? null : _handleSubmit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.letterboxdBlue,
-                      foregroundColor: Colors.black,
+                      backgroundColor: const Color(0xFF00AC1C),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      side: const BorderSide(
+                        color: Color(0xFF28C840),
+                        width: 1.2,
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: const RoundedRectangleBorder(
                         borderRadius: BorderRadius.zero,
                       ),
                       textStyle: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 0.5,
+                        letterSpacing: 0.8,
                       ),
                     ),
                     child: Text(
@@ -550,12 +556,42 @@ class _AccountDialogState extends State<AccountDialog> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         OutlinedButton.icon(
+          key: const Key('btn_open_letterboxd_export'),
+          onPressed: _isBusy
+              ? null
+              : () => openExternalUrl('https://letterboxd.com/settings/data/'),
+          icon: const Icon(
+            Icons.open_in_new_rounded,
+            size: 16,
+            color: AppColors.textSecondary,
+          ),
+          label: const Text(
+            'Baixar dados no Letterboxd (Settings → Data)',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.textPrimary,
+            backgroundColor: AppColors.surfaceElevated,
+            side: const BorderSide(color: AppColors.border),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            textStyle: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.zero,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
           key: const Key('btn_account_pick_csv'),
           onPressed: _isBusy ? null : _handlePickCsv,
           icon: Icon(
             _pickedFileName != null
                 ? Icons.check_circle_rounded
-                : Icons.upload_file_rounded,
+                : Icons.folder_zip_rounded,
             size: 18,
             color: _pickedFileName != null
                 ? AppColors.letterboxdGreen
@@ -564,7 +600,7 @@ class _AccountDialogState extends State<AccountDialog> {
           label: Text(
             _pickedFileName != null
                 ? 'Selecionado: $_pickedFileName'
-                : 'Selecionar arquivo watched.csv',
+                : 'Selecionar arquivo .zip ou watched.csv',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -654,9 +690,7 @@ class _TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected
-          ? AppColors.letterboxdBlue.withValues(alpha: 0.18)
-          : AppColors.surfaceElevated,
+      color: AppColors.surfaceElevated,
       child: InkWell(
         key: buttonKey,
         onTap: onTap,
@@ -665,15 +699,13 @@ class _TabButton extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.zero,
-            border: Border.all(
-              color: selected ? AppColors.letterboxdBlue : AppColors.border,
-            ),
+            border: Border.all(color: AppColors.border),
           ),
           child: Text(
             label,
             style: TextStyle(
               color: selected
-                  ? AppColors.letterboxdBlue
+                  ? AppColors.letterboxdGreen
                   : AppColors.textSecondary,
               fontSize: 12.5,
               fontWeight: FontWeight.w800,
