@@ -22,10 +22,16 @@ class FirestoreAccountClient {
 
   bool get isConfigured => projectId.trim().isNotEmpty;
 
-  String _docUrl(String username) {
-    final norm = UserAccount.normalizeUsername(username);
+  String _docUrl(String accountId) {
+    final cleanId = accountId.trim();
     final encodedDb = Uri.encodeComponent(databaseId);
-    return 'https://firestore.googleapis.com/v1/projects/$projectId/databases/$encodedDb/documents/accounts/$norm';
+    final encodedId = Uri.encodeComponent(cleanId);
+    return 'https://firestore.googleapis.com/v1/projects/$projectId/databases/$encodedDb/documents/accounts/$encodedId';
+  }
+
+  String _runQueryUrl() {
+    final encodedDb = Uri.encodeComponent(databaseId);
+    return 'https://firestore.googleapis.com/v1/projects/$projectId/databases/$encodedDb/documents:runQuery';
   }
 
   String _collectionLeaderboardUrl({int pageSize = 200}) {
@@ -33,11 +39,58 @@ class FirestoreAccountClient {
     return 'https://firestore.googleapis.com/v1/projects/$projectId/databases/$encodedDb/documents/accounts?pageSize=$pageSize&mask.fieldPaths=username&mask.fieldPaths=highScore';
   }
 
-  Future<UserAccount?> fetchAccount(String username) async {
-    if (!isConfigured) return null;
-    final raw = await impl.httpGetJson(_docUrl(username));
+  /// Busca uma conta diretamente pelo seu `id` (`uid`) imutável.
+  Future<UserAccount?> fetchAccountById(String accountId) async {
+    if (!isConfigured || accountId.trim().isEmpty) return null;
+    final raw = await impl.httpGetJson(_docUrl(accountId));
     if (raw == null) return null;
     return decodeFirestoreDocument(raw);
+  }
+
+  /// Busca uma conta pelo seu `username` atual (consultando o campo `username` na coleção `accounts`).
+  Future<UserAccount?> fetchAccount(String username) async {
+    if (!isConfigured) return null;
+    final norm = UserAccount.normalizeUsername(username);
+    if (norm.isEmpty) return null;
+
+    final queryBody = <String, dynamic>{
+      'structuredQuery': <String, dynamic>{
+        'from': <Map<String, dynamic>>[
+          <String, dynamic>{'collectionId': 'accounts'},
+        ],
+        'where': <String, dynamic>{
+          'fieldFilter': <String, dynamic>{
+            'field': <String, dynamic>{'fieldPath': 'username'},
+            'op': 'EQUAL',
+            'value': <String, dynamic>{'stringValue': norm},
+          },
+        },
+        'limit': 1,
+      },
+    };
+
+    final queryResult = await impl.httpPostJson(_runQueryUrl(), queryBody);
+    if (queryResult is List) {
+      for (final item in queryResult) {
+        if (item is Map<String, dynamic>) {
+          final doc = item['document'];
+          if (doc is Map<String, dynamic>) {
+            final parsed = decodeFirestoreDocument(doc);
+            if (parsed != null) return parsed;
+          }
+        }
+      }
+    }
+
+    // Fallback para documentos legados cujo ID era o próprio username
+    final raw = await impl.httpGetJson(_docUrl(norm));
+    if (raw == null) return null;
+    final legacy = decodeFirestoreDocument(raw);
+    if (legacy != null &&
+        UserAccount.normalizeUsername(legacy.username) == norm) {
+      return legacy;
+    }
+    return null;
   }
 
   Future<List<LeaderboardEntry>> fetchLeaderboard() async {
@@ -61,14 +114,14 @@ class FirestoreAccountClient {
   Future<bool> upsertAccount(UserAccount account) async {
     if (!isConfigured) return false;
     final body = encodeFirestoreDocument(account);
-    return impl.httpPatchJson(_docUrl(account.username), body);
+    return impl.httpPatchJson(_docUrl(account.id), body);
   }
 
-  Future<bool> deleteAccount(String username) async {
+  Future<bool> deleteAccount(String accountId) async {
     if (!isConfigured) return false;
-    final norm = UserAccount.normalizeUsername(username);
-    if (norm.isEmpty) return false;
-    return impl.httpDelete(_docUrl(norm));
+    final cleanId = accountId.trim();
+    if (cleanId.isEmpty) return false;
+    return impl.httpDelete(_docUrl(cleanId));
   }
 
   static LeaderboardEntry? decodeLeaderboardEntry(Map<String, dynamic> doc) {
@@ -219,7 +272,17 @@ class FirestoreAccountClient {
       }
     }
 
+    final rawDocName = doc['name'];
+    String? docId;
+    if (rawDocName is String && rawDocName.isNotEmpty) {
+      final lastSegment = rawDocName.split('/').last.trim();
+      if (lastSegment.isNotEmpty) {
+        docId = Uri.decodeComponent(lastSegment);
+      }
+    }
+
     return UserAccount(
+      id: docId ?? username,
       username: username,
       passwordHash: passwordHash,
       watchedMovieIds: watchedIds,

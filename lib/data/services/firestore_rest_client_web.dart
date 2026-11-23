@@ -37,6 +37,29 @@ Future<bool> httpPatchJson(String url, Map<String, dynamic> body) async {
   }
 }
 
+Future<Object?> httpPostJson(String url, Map<String, dynamic> body) async {
+  try {
+    final headers = web.Headers()
+      ..append('Content-Type', 'application/json; charset=utf-8');
+    final init = web.RequestInit(
+      method: 'POST',
+      headers: headers,
+      body: jsonEncode(body).toJS,
+    );
+    final response = await web.window
+        .fetch(url.toJS, init)
+        .toDart
+        .timeout(const Duration(seconds: 8));
+    if (!response.ok) return null;
+    final jsText = await response.text().toDart.timeout(
+      const Duration(seconds: 8),
+    );
+    return jsonDecode(jsText.toDart);
+  } catch (_) {
+    return null;
+  }
+}
+
 Future<bool> httpDelete(String url) async {
   try {
     final init = web.RequestInit(method: 'DELETE');

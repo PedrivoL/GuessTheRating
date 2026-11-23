@@ -7,9 +7,9 @@ rules_version = '2';
 // This security rules file assumes the following data structures:
 //
 // Collection: accounts
-// Document ID: {username} (normalized lowercase Letterboxd username, 1..40 chars)
+// Document ID: {accountId} (unique account ID, 1..64 chars)
 // Fields:
-//   - username: string (required, immutable, size 1..40, must equal {username} doc ID) - Account username
+//   - username: string (required, mutable, size 1..40) - Account display/login username
 //   - passwordHash: string (required, immutable, exact size 32 hex string) - 32-char hex password hash
 //   - watchedMovieIds: list (required, max 5000 items) - List of watched movie IDs from Letterboxd import
 //   - totalCsvCount: int (required, range 0..50000) - Total count of CSV diary/watched entries processed
@@ -83,7 +83,7 @@ service cloud.firestore {
     // Domain Validators
     // ===============================================================
 
-    function isValidAccount(data, username) {
+    function isValidAccount(data, accountId) {
       let allowedFields = [
         'username',
         'passwordHash',
@@ -94,13 +94,12 @@ service cloud.firestore {
       ];
       return hasRequiredFields(allowedFields) &&
         hasOnlyAllowedFields(allowedFields) &&
-        username is string &&
-        username.size() >= 1 &&
-        username.size() <= 40 &&
+        accountId is string &&
+        accountId.size() >= 1 &&
+        accountId.size() <= 64 &&
         data.username is string &&
         data.username.size() >= 1 &&
         data.username.size() <= 40 &&
-        data.username == username &&
         data.passwordHash is string &&
         data.passwordHash.size() == 32 &&
         data.passwordHash.matches('^[a-fA-F0-9]{32}$') &&
@@ -124,21 +123,20 @@ service cloud.firestore {
     }
 
     // Account profiles, Letterboxd pools & Global Leaderboard
-    match /accounts/{username} {
-      // Allow reading individual accounts by @nick and listing accounts for the Global Leaderboard
+    match /accounts/{accountId} {
+      // Allow reading individual accounts and listing accounts for login lookup & Global Leaderboard
       allow get, list: if true;
 
       // Create new account with strict schema & field validation
-      allow create: if isValidAccount(request.resource.data, username);
+      allow create: if isValidAccount(request.resource.data, accountId);
 
-      // Update existing account only if schema is valid and username + passwordHash remain unchanged
-      allow update: if isValidAccount(request.resource.data, username) &&
-        areImmutableFieldsUnchanged(['username', 'passwordHash']) &&
-        request.resource.data.username == resource.data.username &&
+      // Update existing account (including changing username) only if schema is valid and passwordHash remains unchanged
+      allow update: if isValidAccount(request.resource.data, accountId) &&
+        areImmutableFieldsUnchanged(['passwordHash']) &&
         request.resource.data.passwordHash == resource.data.passwordHash;
 
-      // Allow deleting old account document during username rename
-      allow delete: if true;
+      // Disallow deleting accounts (username renames happen in-place on /accounts/{accountId})
+      allow delete: if false;
     }
   }
 }

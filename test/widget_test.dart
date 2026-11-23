@@ -589,12 +589,14 @@ Date,Name,Year,Letterboxd URI
         await tester.tap(find.byKey(const Key('btn_submit_account')));
         await tester.pumpAndSettle();
 
+        final originalAccountId = vm.currentAccount!.id;
+        expect(originalAccountId, startsWith('usr_'));
         expect(vm.currentAccount?.username, equals('semletterboxd'));
         expect(vm.currentAccount?.watchedMovieIds, isEmpty);
         expect(vm.isUsingWatchedPool, isFalse);
         expect(find.text('Conta: @semletterboxd'), findsOneWidget);
 
-        // Permite mudar o nome (username) da conta conectada
+        // Permite mudar o nome (username) da conta conectada mantendo o mesmo ID (uid) fixo
         await tester.tap(find.byKey(const Key('btn_account')));
         await tester.pumpAndSettle();
         expect(find.byKey(const Key('btn_change_username')), findsOneWidget);
@@ -607,6 +609,7 @@ Date,Name,Year,Letterboxd URI
         await tester.tap(find.byKey(const Key('btn_confirm_change_username')));
         await tester.pumpAndSettle();
 
+        expect(vm.currentAccount?.id, equals(originalAccountId));
         expect(vm.currentAccount?.username, equals('novonome'));
         expect(find.text('Conectado como @novonome'), findsOneWidget);
         expect(find.text('Conta: @novonome'), findsOneWidget);

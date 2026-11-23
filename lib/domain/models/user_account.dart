@@ -1,26 +1,40 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:my_first_app/domain/models/movie.dart';
 import 'package:my_first_app/domain/models/watched_profile.dart';
 
-/// Conta do jogador identificada por `@nick` + senha/PIN, guardando sua pool de filmes e recorde.
+/// Conta do jogador identificada por um `id` (`uid`) imutável e um `username` editável.
 @immutable
 class UserAccount {
   const UserAccount({
+    String? id,
     required this.username,
     required this.passwordHash,
     required this.watchedMovieIds,
     required this.totalCsvCount,
     this.customMovies = const <Movie>[],
     this.highScore = 0,
-  });
+  }) : id = (id != null && id != '') ? id : username;
 
+  /// Identificador único e imutável da conta (chave do documento no banco de dados).
+  final String id;
   final String username;
   final String passwordHash;
   final List<String> watchedMovieIds;
   final int totalCsvCount;
   final List<Movie> customMovies;
   final int highScore;
+
+  static final Random _idRandom = Random();
+
+  /// Gera um `uid` único e imutável para novas contas (ex: `usr_1934a8f1_9b4c2d1e`).
+  static String generateId() {
+    final ts = DateTime.now().millisecondsSinceEpoch.toRadixString(16);
+    final r1 = _idRandom.nextInt(0x7fffffff).toRadixString(16).padLeft(7, '0');
+    final r2 = _idRandom.nextInt(0x7fffffff).toRadixString(16).padLeft(7, '0');
+    return 'usr_${ts}_$r1$r2';
+  }
 
   static String normalizeUsername(String input) =>
       input.trim().replaceFirst(RegExp(r'^@+'), '').toLowerCase();
@@ -68,6 +82,7 @@ class UserAccount {
   }
 
   UserAccount copyWith({
+    String? id,
     String? username,
     String? passwordHash,
     List<String>? watchedMovieIds,
@@ -76,6 +91,7 @@ class UserAccount {
     int? highScore,
   }) {
     return UserAccount(
+      id: id ?? this.id,
       username: username ?? this.username,
       passwordHash: passwordHash ?? this.passwordHash,
       watchedMovieIds: watchedMovieIds ?? this.watchedMovieIds,
@@ -86,6 +102,7 @@ class UserAccount {
   }
 
   factory UserAccount.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
     final username = json['username'];
     final passwordHash = json['passwordHash'];
     final rawIds = json['watchedMovieIds'];
@@ -108,8 +125,14 @@ class UserAccount {
       }
     }
 
+    final normalizedUser = normalizeUsername(username);
+    final effectiveId = (rawId is String && rawId.trim().isNotEmpty)
+        ? rawId.trim()
+        : normalizedUser;
+
     return UserAccount(
-      username: username,
+      id: effectiveId,
+      username: normalizedUser,
       passwordHash: passwordHash,
       watchedMovieIds: List<String>.unmodifiable(rawIds.whereType<String>()),
       totalCsvCount: totalCsvCount is num ? totalCsvCount.toInt() : 0,
@@ -119,6 +142,7 @@ class UserAccount {
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
+    'id': id,
     'username': username,
     'passwordHash': passwordHash,
     'watchedMovieIds': watchedMovieIds,
