@@ -64,6 +64,13 @@ class FirestoreAccountClient {
     return impl.httpPatchJson(_docUrl(account.username), body);
   }
 
+  Future<bool> deleteAccount(String username) async {
+    if (!isConfigured) return false;
+    final norm = UserAccount.normalizeUsername(username);
+    if (norm.isEmpty) return false;
+    return impl.httpDelete(_docUrl(norm));
+  }
+
   static LeaderboardEntry? decodeLeaderboardEntry(Map<String, dynamic> doc) {
     final fields = doc['fields'] as Map<String, dynamic>?;
     if (fields == null) return null;

@@ -23,6 +23,10 @@ abstract interface class AccountService {
     required String password,
   });
   Future<UserAccount> updateAccount(UserAccount account);
+  Future<UserAccount> renameAccount({
+    required String oldUsername,
+    required String newUsername,
+  });
   Future<void> logout();
 }
 
@@ -203,6 +207,53 @@ class SharedPrefsAccountService implements AccountService {
   }
 
   @override
+  Future<UserAccount> renameAccount({
+    required String oldUsername,
+    required String newUsername,
+  }) async {
+    final normOld = UserAccount.normalizeUsername(oldUsername);
+    final normNew = UserAccount.normalizeUsername(newUsername);
+    if (normNew.isEmpty || normNew.length > 40) {
+      throw const FormatException('Informe um novo username válido.');
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final accounts = await _readAllAccounts(prefs);
+    var current = accounts[normOld];
+    if (current == null && firestoreClient.isConfigured) {
+      current = await firestoreClient.fetchAccount(normOld);
+    }
+    if (current == null) {
+      throw FormatException('Conta @$normOld não encontrada.');
+    }
+    if (normOld == normNew) return current;
+
+    var conflict = accounts[normNew];
+    if (conflict == null && firestoreClient.isConfigured) {
+      conflict = await firestoreClient.fetchAccount(normNew);
+    }
+    if (conflict != null) {
+      throw FormatException(
+        'O username @$normNew já está sendo usado por outra conta.',
+      );
+    }
+
+    final renamed = current.copyWith(username: normNew);
+    accounts.remove(normOld);
+    accounts[normNew] = renamed;
+    await _writeAllAccounts(prefs, accounts);
+    await prefs.setString(_activeUsernameKey, normNew);
+
+    if (firestoreClient.isConfigured) {
+      final created = await firestoreClient.upsertAccount(renamed);
+      if (created) {
+        await firestoreClient.deleteAccount(normOld);
+      }
+    }
+    return renamed;
+  }
+
+  @override
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_activeUsernameKey);
@@ -331,6 +382,35 @@ class InMemoryAccountService implements AccountService {
     final norm = UserAccount.normalizeUsername(account.username);
     _accounts[norm] = account;
     return account;
+  }
+
+  @override
+  Future<UserAccount> renameAccount({
+    required String oldUsername,
+    required String newUsername,
+  }) async {
+    final normOld = UserAccount.normalizeUsername(oldUsername);
+    final normNew = UserAccount.normalizeUsername(newUsername);
+    if (normNew.isEmpty || normNew.length > 40) {
+      throw const FormatException('Informe um novo username válido.');
+    }
+    final current = _accounts[normOld];
+    if (current == null) {
+      throw FormatException('Conta @$normOld não encontrada.');
+    }
+    if (normOld == normNew) return current;
+    if (_accounts.containsKey(normNew)) {
+      throw FormatException(
+        'O username @$normNew já está sendo usado por outra conta.',
+      );
+    }
+    final renamed = current.copyWith(username: normNew);
+    _accounts.remove(normOld);
+    _accounts[normNew] = renamed;
+    if (_activeUsername == normOld) {
+      _activeUsername = normNew;
+    }
+    return renamed;
   }
 
   @override

@@ -36,3 +36,16 @@ Future<bool> httpPatchJson(String url, Map<String, dynamic> body) async {
     return false;
   }
 }
+
+Future<bool> httpDelete(String url) async {
+  try {
+    final init = web.RequestInit(method: 'DELETE');
+    final response = await web.window
+        .fetch(url.toJS, init)
+        .toDart
+        .timeout(const Duration(seconds: 8));
+    return response.ok;
+  } catch (_) {
+    return false;
+  }
+}

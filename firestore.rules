@@ -137,8 +137,8 @@ service cloud.firestore {
         request.resource.data.username == resource.data.username &&
         request.resource.data.passwordHash == resource.data.passwordHash;
 
-      // Disallow deleting accounts
-      allow delete: if false;
+      // Allow deleting old account document during username rename
+      allow delete: if true;
     }
   }
 }

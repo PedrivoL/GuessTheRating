@@ -24,7 +24,9 @@ class AccountDialog extends StatefulWidget {
 class _AccountDialogState extends State<AccountDialog> {
   late final TextEditingController _nickController;
   late final TextEditingController _passwordController;
+  late final TextEditingController _renameController;
   bool _isLoginMode = false;
+  bool _isRenaming = false;
   String? _pickedFileName;
   WatchedCsvMatchResult? _resolvedCsvResult;
   String? _errorMessage;
@@ -41,12 +43,14 @@ class _AccountDialogState extends State<AccountDialog> {
         '';
     _nickController = TextEditingController(text: existingNick);
     _passwordController = TextEditingController();
+    _renameController = TextEditingController(text: existingNick);
   }
 
   @override
   void dispose() {
     _nickController.dispose();
     _passwordController.dispose();
+    _renameController.dispose();
     super.dispose();
   }
 
@@ -163,7 +167,46 @@ class _AccountDialogState extends State<AccountDialog> {
       _pickedFileName = null;
       _resolvedCsvResult = null;
       _errorMessage = null;
+      _isRenaming = false;
     });
+  }
+
+  Future<void> _handleConfirmRename() async {
+    final newName = _renameController.text.trim();
+    if (newName.isEmpty) {
+      setState(() {
+        _errorMessage = 'Digite o novo username.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isBusy = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final updated = await widget.viewModel.renameCurrentAccount(newName);
+      if (!mounted) return;
+      setState(() {
+        _nickController.text = updated.username;
+        _renameController.text = updated.username;
+        _isRenaming = false;
+        _isBusy = false;
+      });
+    } on FormatException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.message;
+        _isBusy = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Erro ao mudar username: $e';
+        _isBusy = false;
+      });
+    }
   }
 
   @override
@@ -291,7 +334,165 @@ class _AccountDialogState extends State<AccountDialog> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
+                        if (!_isRenaming)
+                          OutlinedButton.icon(
+                            key: const Key('btn_change_username'),
+                            onPressed: _isBusy
+                                ? null
+                                : () {
+                                    setState(() {
+                                      _renameController.text =
+                                          activeAccount.username;
+                                      _isRenaming = true;
+                                      _errorMessage = null;
+                                    });
+                                  },
+                            icon: const Icon(
+                              Icons.edit_outlined,
+                              size: 15,
+                              color: AppColors.textSecondary,
+                            ),
+                            label: const Text('Mudar nome'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.textPrimary,
+                              backgroundColor: AppColors.surfaceElevated,
+                              side: const BorderSide(color: AppColors.border),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 7,
+                              ),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              textStyle: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.zero,
+                              ),
+                            ),
+                          )
+                        else
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  key: const Key('input_new_username'),
+                                  controller: _renameController,
+                                  enabled: !_isBusy,
+                                  onSubmitted: (_) {
+                                    if (!_isBusy) _handleConfirmRename();
+                                  },
+                                  style: const TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  decoration: const InputDecoration(
+                                    hintText: 'Novo username',
+                                    hintStyle: TextStyle(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    prefixText: '@',
+                                    prefixStyle: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                    isDense: true,
+                                    filled: true,
+                                    fillColor: AppColors.surface,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 8,
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.zero,
+                                      borderSide: BorderSide(
+                                        color: AppColors.border,
+                                      ),
+                                    ),
+                                    disabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.zero,
+                                      borderSide: BorderSide(
+                                        color: AppColors.border,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.zero,
+                                      borderSide: BorderSide(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              OutlinedButton(
+                                key: const Key('btn_confirm_change_username'),
+                                onPressed: _isBusy
+                                    ? null
+                                    : _handleConfirmRename,
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.textPrimary,
+                                  backgroundColor: AppColors.surfaceElevated,
+                                  side: const BorderSide(
+                                    color: AppColors.border,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
+                                  ),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  textStyle: const TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.zero,
+                                  ),
+                                ),
+                                child: const Text('Salvar'),
+                              ),
+                              const SizedBox(width: 6),
+                              OutlinedButton(
+                                key: const Key('btn_cancel_change_username'),
+                                onPressed: _isBusy
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          _isRenaming = false;
+                                          _errorMessage = null;
+                                        });
+                                      },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.textSecondary,
+                                  backgroundColor: AppColors.surfaceElevated,
+                                  side: const BorderSide(
+                                    color: AppColors.border,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
+                                  ),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  textStyle: const TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.zero,
+                                  ),
+                                ),
+                                child: const Text('Cancelar'),
+                              ),
+                            ],
+                          ),
+                        const SizedBox(height: 8),
                         Text(
                           '• ${activeAccount.watchedMovieIds.length} filmes assistidos salvos na conta\n• Recorde da conta: ${activeAccount.highScore}',
                           style: const TextStyle(
@@ -303,6 +504,25 @@ class _AccountDialogState extends State<AccountDialog> {
                       ],
                     ),
                   ),
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.errorRed.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.zero,
+                        border: Border.all(color: AppColors.errorRed),
+                      ),
+                      child: Text(
+                        _errorMessage!,
+                        style: const TextStyle(
+                          color: AppColors.errorRed,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   const Text(
                     'IMPORTAR OU ATUALIZAR FILMES DO LETTERBOXD',

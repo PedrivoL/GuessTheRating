@@ -593,6 +593,23 @@ Date,Name,Year,Letterboxd URI
         expect(vm.currentAccount?.watchedMovieIds, isEmpty);
         expect(vm.isUsingWatchedPool, isFalse);
         expect(find.text('Conta: @semletterboxd'), findsOneWidget);
+
+        // Permite mudar o nome (username) da conta conectada
+        await tester.tap(find.byKey(const Key('btn_account')));
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('btn_change_username')), findsOneWidget);
+        await tester.tap(find.byKey(const Key('btn_change_username')));
+        await tester.pump();
+        await tester.enterText(
+          find.byKey(const Key('input_new_username')),
+          'novonome',
+        );
+        await tester.tap(find.byKey(const Key('btn_confirm_change_username')));
+        await tester.pumpAndSettle();
+
+        expect(vm.currentAccount?.username, equals('novonome'));
+        expect(find.text('Conectado como @novonome'), findsOneWidget);
+        expect(find.text('Conta: @novonome'), findsOneWidget);
       },
     );
 

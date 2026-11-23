@@ -41,3 +41,19 @@ Future<bool> httpPatchJson(String url, Map<String, dynamic> body) async {
     client.close(force: true);
   }
 }
+
+Future<bool> httpDelete(String url) async {
+  final client = HttpClient()..connectionTimeout = const Duration(seconds: 8);
+  try {
+    final req = await client
+        .openUrl('DELETE', Uri.parse(url))
+        .timeout(const Duration(seconds: 8));
+    final res = await req.close().timeout(const Duration(seconds: 8));
+    await res.drain<void>();
+    return res.statusCode >= 200 && res.statusCode < 300;
+  } catch (_) {
+    return false;
+  } finally {
+    client.close(force: true);
+  }
+}

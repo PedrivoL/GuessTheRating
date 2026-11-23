@@ -504,6 +504,35 @@ class GameViewModel extends ChangeNotifier {
     _safeNotifyListeners();
   }
 
+  /// Altera o username da conta conectada, atualizando também no banco de dados e no perfil ativo.
+  Future<UserAccount> renameCurrentAccount(String newUsername) async {
+    final active = _currentAccount;
+    if (active == null) {
+      throw const FormatException('Nenhuma conta conectada.');
+    }
+    final oldUsername = active.username;
+    final renamed = await _accountRepository.renameAccount(
+      oldUsername: oldUsername,
+      newUsername: newUsername,
+    );
+    if (_isDisposed) return renamed;
+    _currentAccount = renamed;
+
+    final profile = _watchedProfile;
+    if (profile != null &&
+        UserAccount.normalizeUsername(profile.username) ==
+            UserAccount.normalizeUsername(oldUsername)) {
+      final updatedProfile = profile.copyWith(username: renamed.username);
+      await _watchedProfileRepository.saveProfile(updatedProfile);
+      if (!_isDisposed) {
+        _watchedProfile = updatedProfile;
+      }
+    }
+
+    _safeNotifyListeners();
+    return renamed;
+  }
+
   /// Retorna o ranking global de jogadores ordenados pelo maior recorde.
   Future<List<LeaderboardEntry>> fetchLeaderboard() async {
     final acc = _currentAccount;

@@ -41,5 +41,13 @@ class AccountRepository {
   Future<UserAccount> updateAccount(UserAccount account) =>
       _accountService.updateAccount(account);
 
+  Future<UserAccount> renameAccount({
+    required String oldUsername,
+    required String newUsername,
+  }) => _accountService.renameAccount(
+    oldUsername: oldUsername,
+    newUsername: newUsername,
+  );
+
   Future<void> logout() => _accountService.logout();
 }

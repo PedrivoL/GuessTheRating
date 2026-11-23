@@ -26,8 +26,10 @@ class UserAccount {
       input.trim().replaceFirst(RegExp(r'^@+'), '').toLowerCase();
 
   /// Gera um hash determinístico de 32 caracteres hexadecimais compatível com Web (JS/Wasm) e Nativo.
-  static String hashPassword(String username, String password) {
-    final normUser = normalizeUsername(username);
+  static String hashPassword(String username, String password) =>
+      _computeHash('', password);
+
+  static String _computeHash(String normUser, String password) {
     final payload = utf8.encode('gtr_salt_v1:$normUser:${password.trim()}');
     var h1 = 0x811c9dc5;
     var h2 = 0x9e3779b9;
@@ -45,8 +47,15 @@ class UserAccount {
         '${h4.toRadixString(16).padLeft(8, '0')}';
   }
 
-  bool verifyPassword(String password) =>
-      passwordHash == hashPassword(username, password);
+  bool verifyPassword(String password) {
+    if (passwordHash == _computeHash('', password)) return true;
+    final normUser = normalizeUsername(username);
+    if (passwordHash == _computeHash(normUser, password)) return true;
+    for (final legacyUser in const ['betopeixe', 'pedrivol']) {
+      if (passwordHash == _computeHash(legacyUser, password)) return true;
+    }
+    return false;
+  }
 
   WatchedProfile toWatchedProfile({bool isActive = true}) {
     return WatchedProfile(
